@@ -31,6 +31,12 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- Web 相关 -->
+            <dependency>
+                <groupId>cn.iocoder.boot</groupId>
+                <artifactId>yudao-spring-boot-starter-web</artifactId>
+                <version>${revision}</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>
