@@ -3,3 +3,10 @@ spring:
     name: yudao-server
   profiles:
     active: local
+
+
+--- #################### 芋道相关配置 ####################
+
+yudao:
+  info:
+    version: 1.0.0

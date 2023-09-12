@@ -21,6 +21,11 @@
     <url>https://github.com/YunaiV/ruoyi-vue-pro</url>
 
     <dependencies>
+
+        <dependency>
+            <groupId>cn.iocoder.boot</groupId>
+            <artifactId>yudao-spring-boot-starter-banner</artifactId>
+        </dependency>
         <!-- Web 相关 -->
         <dependency>
             <groupId>cn.iocoder.boot</groupId>
