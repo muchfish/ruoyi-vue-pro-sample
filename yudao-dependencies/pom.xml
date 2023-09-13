@@ -16,7 +16,9 @@
     <properties>
         <revision>1.8.1-snapshot</revision>
         <!-- 统一依赖管理 -->
-        <spring.boot.version>2.7.13</spring.boot.version>
+        <spring.boot.version>2.7.14</spring.boot.version>
+        <!-- Web 相关 -->
+        <knife4j.version>4.3.0</knife4j.version>
         <!-- 工具类相关 -->
         <lombok.version>1.18.28</lombok.version>
         <hutool.version>5.8.20</hutool.version>
@@ -48,6 +50,11 @@
                 <version>${revision}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
             <!-- 工具类相关 -->
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>

@@ -1,1 +1,2 @@
 cn.iocoder.yudao.framework.web.config.YudaoWebAutoConfiguration
+cn.iocoder.yudao.framework.swagger.config.YudaoSwaggerAutoConfiguration
