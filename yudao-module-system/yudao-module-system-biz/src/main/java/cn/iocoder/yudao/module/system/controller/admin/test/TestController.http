@@ -1,3 +1,10 @@
 
-# 测试接口路径 **.controller.admin.**包下的接口，被增加了访问路径前缀/admin-api
+### 测试接口路径 **.controller.admin.**包下的接口，被增加了访问路径前缀/admin-api
 GET http://localhost:48080/admin-api/test/get
+
+
+### Bad Request
+GET http://localhost:48080/admin-api/test/get?name=y&age=130
+
+### Success Request
+GET http://localhost:48080/admin-api/test/get?name=yudao&age=13

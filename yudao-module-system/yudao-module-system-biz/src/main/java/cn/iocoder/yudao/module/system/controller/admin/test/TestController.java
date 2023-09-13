@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 /**
  * 测试
  *
@@ -22,7 +24,7 @@ public class TestController {
 
     @GetMapping({"/get"})
     @Operation(summary = "测试接口")
-    public Object get(TestReqVO reqVO) {
+    public Object get(@Valid TestReqVO reqVO) {
         log.info("请求参数={}",reqVO);
         return new TestRespVO().setName("test").setAge(10);
     }
