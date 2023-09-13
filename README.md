@@ -56,5 +56,16 @@
 
 
 
+#### 给管理后台和app端接口路径增加访问前缀
 
+1. [yudao-spring-boot-starter-web]
+
+   1. 给接口路径增加访问前缀，避免接口路径暴露（不理解）
+      1. 给`**.controller.admin.**`下的接口路径增加访问前缀/admin-api
+      2. 给`**.controller.app.**`下的接口路径增加访问前缀/app-api
+
+   - WebMvcConfigurer
+     - WebMvcConfigurer是一个接口，里面提供了很多web应用常用的拦截方法。通过实现该接口，可以实现web应用 跨域设置、类型转化器、自定义拦截器、页面跳转等功能。
+   - configurePathMatch：路径匹配规则
+     - 设置前端请求url与后端接口url的匹配规则。
 
