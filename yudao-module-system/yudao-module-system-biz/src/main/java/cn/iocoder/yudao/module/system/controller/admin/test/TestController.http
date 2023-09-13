@@ -8,3 +8,6 @@ GET http://localhost:48080/admin-api/test/get?name=y&age=130
 
 ### Success Request
 GET http://localhost:48080/admin-api/test/get?name=yudao&age=13
+
+### 业务异常测试
+GET http://localhost:48080/admin-api/test/get?name=yudao&age=13

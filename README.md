@@ -69,3 +69,59 @@
    - configurePathMatch：路径匹配规则
      - 设置前端请求url与后端接口url的匹配规则。
 
+
+
+#### 基于 Swagger + Knife4j 实现 API 接口文档
+
+1. [yudao-spring-boot-starter-web]
+
+   1. 生成接口文档，支持接口调试。地址：http://localhost:48080/doc.html#/home
+   2. 编写swagger包，集成 Swagger + Knife4j 实现 API 接口文档
+   3. 配置OpenAPI页面的接口信息
+
+   - @ConditionalOnProperty：用于根据配置文件中的属性值来决定是否加载某个Bean或配置类。
+     - @ConditionalOnProperty注解有以下几个常用的属性：
+       - name：指定配置文件中的属性名。
+       - havingValue：指定配置文件中的属性值，与name属性一起使用。
+       - matchIfMissing：当配置文件中没有指定属性时，是否加载被注解的Bean或配置类。
+       - prefix：指定配置文件中的属性名的前缀。
+       - value：name属性的别名。
+   - spring-boot-configuration-processor：用于生成配置元数据的注解处理器，使用后在配置文件（yml等）中写配置会有提示（不知道为什么没生效）
+   - maven中`<optional>true</optional>`：true是用来标记一个依赖项为可选的。当一个依赖项被标记为可选时，它不会被自动包含在项目的依赖树中，也不会传递给其他依赖项。
+   - Springdoc：Springdoc是一个用于生成OpenAPI（前身为swagger）文档的Spring Boot库。它通过解析应用程序中的注解和配置，自动生成API文档，并提供了一些自定义选项和扩展功能。与Swagger UI集成，可以方便地查看和测试API文档。
+   - Knife4j：基于Springdoc的一个增强工具
+   - knife4j-openapi3-spring-boot-starter：集成和使用Knife4j，一个用于生成和展示OpenAPI文档的工具。集成了springdoc-openapi-ui、
+   - springdoc-openapi-ui：用于生成和展示OpenAPI文档的开源库，自动将你的API端点映射为OpenAPI规范（[yudao-server]中的TestController）
+
+
+
+#### 数据校验
+
+1. [yudao-server]
+
+   1. 对接口入参进行数据校验
+
+   - [spring-boot-starter-validation]：提供了对数据校验的支持。它基于Java Bean Validation规范（JSR 380）实现，可以用于对请求参数、方法参数、实体对象等进行校验。
+
+
+
+#### 设置通用接口结果返回和异常统一处理
+
+1. [yudao-common]
+   1. 设置通用结果类CommonResult
+   2. 设置异常体系
+      1. ErrorCode：异常码
+      2. ServiceException：业务异常
+      3. ServerException：服务异常
+      4. GlobalErrorCodeConstants：全局错误码枚举
+      5. ServiceErrorCodeRange：业务异常的错误码区间规定
+      6. ServiceExceptionUtil：业务异常工具类，便于手动抛业务异常和格式化异常信息
+2. [yudao-spring-boot-starter-web]
+   1. GlobalExceptionHandler：全局异常处理
+3. [yudao-module-system-biz]
+   1. TestController测试上述功能
+
+
+
+
+
