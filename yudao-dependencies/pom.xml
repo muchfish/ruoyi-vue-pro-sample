@@ -19,7 +19,10 @@
         <spring.boot.version>2.7.14</spring.boot.version>
         <!-- Web 相关 -->
         <knife4j.version>4.3.0</knife4j.version>
+        <!-- DB 相关 -->
+        <redisson.version>3.18.0</redisson.version>
         <!-- 工具类相关 -->
+        <captcha-plus.version>1.0.6</captcha-plus.version>
         <lombok.version>1.18.28</lombok.version>
         <hutool.version>5.8.20</hutool.version>
     </properties>
@@ -42,7 +45,11 @@
                 <artifactId>yudao-spring-boot-starter-banner</artifactId>
                 <version>${revision}</version>
             </dependency>
-
+            <dependency>
+                <groupId>cn.iocoder.boot</groupId>
+                <artifactId>yudao-spring-boot-starter-captcha</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <!-- Web 相关 -->
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>
@@ -54,6 +61,19 @@
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
+            </dependency>
+
+            <!-- DB 相关 -->
+
+            <dependency>
+                <groupId>cn.iocoder.boot</groupId>
+                <artifactId>yudao-spring-boot-starter-redis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
             </dependency>
             <!-- 工具类相关 -->
             <dependency>
@@ -70,6 +90,12 @@
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xingyuv</groupId>
+                <artifactId>spring-boot-starter-captcha-plus</artifactId>
+                <version>${captcha-plus.version}</version>
             </dependency>
 
         </dependencies>

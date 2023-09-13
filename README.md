@@ -121,7 +121,26 @@
 3. [yudao-module-system-biz]
    1. TestController测试上述功能
 
+#### 接入验证码和redis
 
+1. [yudao-spring-boot-starter-redis]
+
+   1. 创建RedisTemplate<String, Object> Bean，使用 JSON 序列化方式，支持任何对象类型的序列化/反序列化
+
+   - JavaTimeModule：支持Java 8中的日期和时间类型的序列化和反序列化。
+   - redisson：Java的分布式对象存储和缓存框架，目前仅使用到它创建RedisConnectionFactory bean，连接redis的功能
+
+2. [yudao-spring-boot-starter-captcha]
+
+   1. 基于 aj-captcha 实现滑块验证码
+
+   - RedisCaptchaServiceImpl：基于SPI实现验证码缓存的set和get（redis实现）
+
+3. [yudao-module-system-biz]
+
+   1. 实现业务接口，验证码的获取和校验
+
+   - @CrossOrigin：解决跨域
 
 
 
