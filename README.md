@@ -41,3 +41,20 @@
    		- ApplicationRunner，Spring Boot提供的接口，在项目启动后执行run方法
 3. lombok.config
    1. lombok.config是lombok的配置文件，用于配置此文件所在目录以及子目录的lombok特性，子目录中配置文件可以覆盖父目录配置
+
+
+
+#### 创建系统管理业务模块架子[yudao-module-system]
+
+1. [yudao-module-system]
+   1. 存放管理后台系统管理相关业务，用户、部门、权限、数据字典等等
+   2. 作为system模块的父pom
+2. [yudao-module-system-api]
+   1. system 模块 API，暴露给其它模块调用，暴露的接口由[yudao-module-system-biz]实现
+3. [yudao-module-system-biz]
+   1. system 模块的具体实现
+
+
+
+
+

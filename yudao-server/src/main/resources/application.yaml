@@ -10,3 +10,4 @@ spring:
 yudao:
   info:
     version: 1.0.0
+    base-package: cn.iocoder.yudao

@@ -12,6 +12,7 @@
         <module>yudao-framework</module>
         <!-- Server 主项目 -->
         <module>yudao-server</module>
+        <module>yudao-module-system</module>
 
     </modules>
 
