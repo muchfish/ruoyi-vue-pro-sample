@@ -142,5 +142,25 @@
 
    - @CrossOrigin：解决跨域
 
+#### 自定义banner、开启验证码限流、全局跨域配置
 
+1. [yudao-spring-boot-starter-banner]
+
+   1. 自定义banner文件：MyBanner.txt
+
+2. [yudao-spring-boot-starter-captcha]
+
+   1. 开启一分钟内接口请求次数限制配置：req-frequency-limit-enable=true
+
+   - CaptchaVO#browserInfo：客户端ip+userAgent，用于生成clientUid（限流开启时使用）
+   - FrequencyLimitHandler：频率限制处理程序，按clientUid进行限流。（实现时使用clientUid作为缓存key，进行加锁和计数）
+
+3. [yudao-spring-boot-starter-web]
+
+   1. 创建CorsFilter Bean，解决跨域
+
+   - FilterRegistrationBean：用于注册和管理过滤器（Filter）的Bean。管理生命周期或者设置过滤器的名称、URL模式、调用顺序等
+   - CorsFilter：跨域filter
+   - UrlBasedCorsConfigurationSource：为不同的URL路径配置不同的CORS策略（CorsConfiguration）。
+   - CorsConfiguration：CORS配置
 
