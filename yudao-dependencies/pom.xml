@@ -20,6 +20,9 @@
         <!-- Web 相关 -->
         <knife4j.version>4.3.0</knife4j.version>
         <!-- DB 相关 -->
+        <druid.version>1.2.18</druid.version>
+        <mybatis-plus.version>3.5.3.2</mybatis-plus.version>
+        <dynamic-datasource.version>3.6.1</dynamic-datasource.version>
         <redisson.version>3.18.0</redisson.version>
         <!-- 工具类相关 -->
         <captcha-plus.version>1.0.6</captcha-plus.version>
@@ -64,7 +67,27 @@
             </dependency>
 
             <!-- DB 相关 -->
+            <dependency>
+                <groupId>cn.iocoder.boot</groupId>
+                <artifactId>yudao-spring-boot-starter-mybatis</artifactId>
+                <version>${revision}</version>
+            </dependency>
 
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>dynamic-datasource-spring-boot-starter</artifactId> <!-- 多数据源 -->
+                <version>${dynamic-datasource.version}</version>
+            </dependency>
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>
                 <artifactId>yudao-spring-boot-starter-redis</artifactId>

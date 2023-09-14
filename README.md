@@ -164,3 +164,39 @@
    - UrlBasedCorsConfigurationSource：为不同的URL路径配置不同的CORS策略（CorsConfiguration）。
    - CorsConfiguration：CORS配置
 
+#### 集成mybatis和多数据源
+
+1. [yudao-spring-boot-starter-mybatis]
+
+   1. 整合mybatisplus
+      1. 依赖mybatis-plus-boot-starter
+      2. 开启下划线（数据库字段）转驼峰（DO字段）映射：map-underscore-to-camel-case: true
+      3. 配置全局主键生成策略：id-type: AUTO（自增）
+      4. 配置逻辑删除/未删除的值：logic-delete-value/logic-not-delete-value
+      5. 数据库敏感数据加密密码配置：mybatis-plus.encryptor.password（应该没用到）
+   2. MybatisPlus的注解
+      1. @TableName：DO对应的表面，不写则取DO类名
+         1. 属性autoResultMap：autoResultMap配置为true时，MyBatis会自动根据查询结果的列名和Java对象的属性名进行映射，创建结果映射。无需手动编写结果映射。
+      2. @TableLogic：标注为逻辑删除字段.
+   3. MybatisPlus的API
+      1. BaseMapper类：Mapper 继承该接口后，无需编写 mapper.xml 文件，即可获得CRUD功能
+      2. LambdaQueryWrapper：Lambda 语法使用 Wrapper（Wrapper为查询条件封装，er、like等等）
+   4. 开启多数据源支持
+      1. 依赖dynamic-datasource-spring-boot-starter
+   5. 配置druid数据源
+      1. 依赖druid-spring-boot-starter
+   6. 开启事务支持
+      1. @EnableTransactionManagement
+   7. 扫描mapper接口，注册映射器
+   8. 配置mybatisPlus拦截器，开启分页
+
+   - 扫描cn.iocoder.yudao包下的并且由@Mapper注解标记的接口,注册为MyBatis的映射器。lazyInitialization=true则开启延迟加载Mapper接口的实现类
+
+     ```
+     @MapperScan(value = "cn.iocoder.yudao", annotationClass = Mapper.class,
+             lazyInitialization = "${mybatis.lazy-initialization:false}")
+     ```
+
+2. [yudao-module-system-biz]
+   1. 编写业务接口：**/system/tenant/get-id-by-name**(使用租户名，获得租户编号)
+   2. 创建TenantController、TenantService、TenantMapper
