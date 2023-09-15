@@ -221,3 +221,19 @@
    - Validator：基于JSR-303标准的参数校验类
      - validate方法：执行校验操作，返回验证失败的约束
    - ConstraintViolation：验证失败的约束
+
+#### 集成mapstruct（对象转换工具）
+
+1. [yudao-common]
+
+   1. 集成mapstruct的依赖，便于所有模块使用
+      - mapstruct
+        - Java注解处理器
+        - 基于JSR 269实现，在编译期处理注解，并且读取、修改和添加抽象语法树中的内容（https://blog.csdn.net/Mango_Bin/article/details/125168370）
+        - 在编译期自动生成映射转换代码，因此安全性高，速度快。
+
+2. [yudao-module-system-biz]
+
+   1. 创建/list-all-simple，获得全部字典数据列表接口
+
+   - cn.iocoder.yudao.module.system.convert：存放mapstruct的对象转换类
