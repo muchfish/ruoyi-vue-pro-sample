@@ -12,8 +12,8 @@
 
 3. [最外层pom.xml]
 	1. 作为其他所有模块的父pom，管理项目的版本号和依赖
-	2. 版主仲裁中使用[yudao-dependencies]，将[yudao-dependencies]的依赖传递给所有的子模块，进而统一管理所有模块的依赖
-
+	2. 版本仲裁(`<dependencyManagement>`)中import[yudao-dependencies]，将[yudao-dependencies]的依赖管理传递给所有的子模块，进而统一管理所有模块的依赖版本
+    -  `<scope>import</scope>`只能在`<dependencyManagement>`中使用，只会将被引用依赖中`<dependencyManagement>`中的依赖关系导入下来
 #### 创建组件架子
 1. [yudao-framework]
 	1. 创建一个[yudao-framework]作为所有组件的父项目，管理子项目的依赖关系和构建配置。
@@ -175,12 +175,12 @@
       4. 配置逻辑删除/未删除的值：logic-delete-value/logic-not-delete-value
       5. 数据库敏感数据加密密码配置：mybatis-plus.encryptor.password（应该没用到）
    2. MybatisPlus的注解
-      1. @TableName：DO对应的表面，不写则取DO类名
+      1. @TableName：DO对应的表名，不写则取DO类名
          1. 属性autoResultMap：autoResultMap配置为true时，MyBatis会自动根据查询结果的列名和Java对象的属性名进行映射，创建结果映射。无需手动编写结果映射。
       2. @TableLogic：标注为逻辑删除字段.
    3. MybatisPlus的API
       1. BaseMapper类：Mapper 继承该接口后，无需编写 mapper.xml 文件，即可获得CRUD功能
-      2. LambdaQueryWrapper：Lambda 语法使用 Wrapper（Wrapper为查询条件封装，er、like等等）
+      2. LambdaQueryWrapper：Lambda 语法使用 Wrapper（Wrapper为查询条件封装，eq、like等等）
    4. 开启多数据源支持
       1. 依赖dynamic-datasource-spring-boot-starter
    5. 配置druid数据源
@@ -200,3 +200,24 @@
 2. [yudao-module-system-biz]
    1. 编写业务接口：**/system/tenant/get-id-by-name**(使用租户名，获得租户编号)
    2. 创建TenantController、TenantService、TenantMapper
+
+
+
+#### 使用账号密码登录
+
+1. [yudao-module-system-biz]
+
+   1. 实现/login接口
+      1. 校验验证码
+         - 服务端验证码二次校验：（猜测）验证码check接口和login接口非同一接口。为防止用户直接跳过验证码的check接口，因此会在login接口进行二次验证码校验，校验check接口下发的验证成功的票据
+      2. 认证账号密码
+         - 密码校验未做
+      3. 下发token
+
+2. [yudao-common]
+
+   1. 创建ValidationUtils，提供方法内的参数校验
+
+   - Validator：基于JSR-303标准的参数校验类
+     - validate方法：执行校验操作，返回验证失败的约束
+   - ConstraintViolation：验证失败的约束
