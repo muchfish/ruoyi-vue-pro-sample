@@ -237,3 +237,12 @@
    1. 创建/list-all-simple，获得全部字典数据列表接口
 
    - cn.iocoder.yudao.module.system.convert：存放mapstruct的对象转换类
+
+
+
+#### RBAC权限-获取登录用户的权限信息（待完善）
+
+1. [yudao-module-system-biz]
+   1. 创建接口/get-permission-info：获取登录用户的权限信息
+      - RBAC模式，通过登录用户获取用户角色信息，通过角色获取角色菜单信息
+   2. 获取权限信息后，可以进入到后台页面了
