@@ -246,3 +246,37 @@
    1. 创建接口/get-permission-info：获取登录用户的权限信息
       - RBAC模式，通过登录用户获取用户角色信息，通过角色获取角色菜单信息
    2. 获取权限信息后，可以进入到后台页面了
+
+#### 整合spring-security，完善登录认证
+
+1. [yudao-spring-boot-starter-security]
+
+   1. 自定义Filter（` TokenAuthenticationFilter`）完成token解析和用户认证
+
+      1. 解析自定义header(头Authorization)获取token
+      2. 解析token，构建用户信息
+      3. 构建认证信息，完成认证（`cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils#buildAuthentication`）
+
+   2. 配置`SecurityFilterChain`
+
+      1. CSRF禁用
+      2. 开放无需认证即可访问的接口，其他接口配置为认证才可访问
+      3. 配置`TokenAuthenticationFilter`在`UsernamePasswordAuthenticationFilter`之前
+
+      - @EnableWebSecurity：启用spring security，加载一堆相关的bean
+      - SecurityFilterChain：过滤器链，spring security是基于各种过滤器实现的权限控制,`filterChain`方法就是构建各种过滤器
+      - csrf：跨站请求伪造，spring security默认开启了csrf，启用后需要前端配合编码，因此关闭
+      - authorizeRequests：允许根据使用RequestMatcher实现（即通过 URL 模式）限制HttpServletRequest访问。
+      - antMatchers：ant模式的接口路径匹配。
+      - .permitAll()：允许任何人访问（无论是否为登录用户）
+      - httpSecurity.addFilterBefore：在某过滤器之前添加一个过滤器
+      - UsernamePasswordAuthenticationFilter：基于用户名和密码的身份验证过滤器，是spring security默认的认证过滤器
+
+2. [yudao-spring-boot-starter-redis]
+
+   1. 创建RedisUtil，提供redis读写服务
+
+3. [yudao-module-system-biz]
+
+   1. /login接口中，在登录成功后将用户的token存入缓存中，用于` TokenAuthenticationFilter`中进行token的认证和解析，完善登录认证流程
+

@@ -21,11 +21,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 认证")
 @RestController
@@ -44,7 +44,6 @@ public class AuthController {
     private RoleMapper roleMapper;
 
     @PostMapping("/login")
-    @PermitAll
     @Operation(summary = "使用账号密码登录")
     public CommonResult<AuthLoginRespVO> login(@RequestBody @Valid AuthLoginReqVO reqVO) {
         return success(authService.login(reqVO));
@@ -55,7 +54,7 @@ public class AuthController {
     @Operation(summary = "获取登录用户的权限信息")
     public CommonResult<AuthPermissionInfoRespVO> getPermissionInfo() {
         // 1.1 获得用户信息
-        AdminUserDO user = userMapper.selectById(1);
+        AdminUserDO user = userMapper.selectById(getLoginUserId());
         if (user == null) {
             return null;
         }

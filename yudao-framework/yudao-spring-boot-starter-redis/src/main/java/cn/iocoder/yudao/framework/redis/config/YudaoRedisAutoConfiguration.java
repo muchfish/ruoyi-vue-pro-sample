@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.redis.config;
 
 import cn.hutool.core.util.ReflectUtil;
+import cn.iocoder.yudao.framework.redis.core.utils.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -30,6 +31,8 @@ public class YudaoRedisAutoConfiguration {
         // 使用 JSON 序列化方式（库是 Jackson ），序列化 VALUE 。
         template.setValueSerializer(buildRedisSerializer());
         template.setHashValueSerializer(buildRedisSerializer());
+        //RedisUtil初始化
+        RedisUtil.init(template);
         return template;
     }
 

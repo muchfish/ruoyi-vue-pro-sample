@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.validation.ValidationUtils;
+import cn.iocoder.yudao.framework.redis.core.utils.RedisUtil;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
@@ -90,8 +91,11 @@ public class AdminAuthServiceImpl implements AdminAuthService {
     }
 
     private AuthLoginRespVO createTokenAfterLoginSuccess(Long userId) {
+        String token = IdUtil.fastSimpleUUID();
+        //缓存登录信息
+        RedisUtil.set(token, userId);
         // 构建返回结果
-        return new AuthLoginRespVO().setUserId(userId).setAccessToken(IdUtil.fastSimpleUUID());
+        return new AuthLoginRespVO().setUserId(userId).setAccessToken(token);
     }
 
 
