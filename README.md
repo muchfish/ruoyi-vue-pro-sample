@@ -311,3 +311,40 @@
 
 1. [yudao-spring-boot-starter-mybatis]
    1. 抽取数据库公共字段封装成对象`BaseDO`
+
+#### 实现部门管理功能和数据库通用字段自动填充
+1. [yudao-spring-boot-starter-mybatis]
+
+   1. `BaseDO`字段上面添加字段自动填充策略
+      - fill：自动填充策略
+        - DEFAULT：默认不处理
+        - INSERT：插入时填充字段
+        - UPDATE：更新时填充字段
+        - INSERT_UPDATE：插入和更新时填充字段
+      - jdbcType：字段对应的数据库类型
+   2. 创建数据库通用字段自动填充控制器（见`DefaultDBFieldHandler`）
+   3. 配置`MetaObjectHandler`bean
+
+   - MetaObjectHandler：元对象字段填充控制器抽象类，实现公共字段自动写入
+
+   - insertFill：插入时对字段的填充
+   - updateFill：更新时对字段的填充
+   - MetaObject：操作Java对象的工具类。它提供了一系列方法，可以方便地对Java对象进行属性的读取、写入和判断等操作。(Mybatis提供)
+
+2. [yudao-module-system-biz]
+
+   1. `/get-unread-count`接口暂时写一个空实现，不让页面报错
+   
+   2. 用户模块提供`/system/user/list-all-simple`接口，获取用户精简信息列表。供部门管理使用
+   
+   3. 部门管理
+      1. 数据库模型
+         ![ruoyi-vue-pro-部门管理[部门管理].png](.image/ruoyi-vue-pro-部门管理[部门管理].png)
+      
+      2. CRUD
+         - `validateForCreateOrUpdate()`方法：
+           - 校验自己是否存在
+           - 校验父部门的有效性
+             - 不能设置自己为父部门
+             - 父岗位是否存在校验
+             - 父部门不能是原来的子部门（需要递归校验所有子部门）

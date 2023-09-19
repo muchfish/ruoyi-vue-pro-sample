@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 后台用户 Service 实现类
@@ -25,6 +26,11 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Override
     public AdminUserDO getUserByUsername(String username) {
         return userMapper.selectByUsername(username);
+    }
+
+    @Override
+    public List<AdminUserDO> getUserListByStatus(Integer status) {
+        return userMapper.selectListByStatus(status);
     }
 
     @Override

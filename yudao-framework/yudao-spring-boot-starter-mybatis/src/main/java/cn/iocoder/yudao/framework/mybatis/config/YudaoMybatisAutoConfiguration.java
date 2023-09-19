@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.framework.mybatis.config;
 
+import cn.iocoder.yudao.framework.mybatis.core.handler.DefaultDBFieldHandler;
+import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,8 +26,9 @@ public class YudaoMybatisAutoConfiguration {
         return mybatisPlusInterceptor;
     }
 
-
-
-
+    @Bean
+    public MetaObjectHandler defaultMetaObjectHandler(){
+        return new DefaultDBFieldHandler(); // 自动填充参数类
+    }
 
 }
