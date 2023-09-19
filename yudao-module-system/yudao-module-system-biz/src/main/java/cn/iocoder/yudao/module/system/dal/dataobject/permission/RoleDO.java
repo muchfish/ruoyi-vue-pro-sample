@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.system.dal.dataobject.permission;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 角色 DO
@@ -12,7 +14,8 @@ import lombok.Data;
  */
 @TableName(value = "system_role", autoResultMap = true)
 @Data
-public class RoleDO {
+@EqualsAndHashCode(callSuper = true)
+public class RoleDO extends BaseDO {
 
     /**
      * 角色ID

@@ -306,3 +306,8 @@
 2. [yudao-module-system-biz]
 
    1. 登录之前的接口方法上使用@LoginFree进行标注，实现免登录
+
+#### 封装数据库公共字段DO
+
+1. [yudao-spring-boot-starter-mybatis]
+   1. 抽取数据库公共字段封装成对象`BaseDO`

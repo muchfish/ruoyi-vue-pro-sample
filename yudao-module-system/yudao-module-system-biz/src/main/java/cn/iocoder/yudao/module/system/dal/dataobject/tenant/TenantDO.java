@@ -1,6 +1,9 @@
 package cn.iocoder.yudao.module.system.dal.dataobject.tenant;
 
 
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.*;
 import org.apache.ibatis.type.JdbcType;
@@ -18,7 +21,8 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TenantDO  {
+@EqualsAndHashCode(callSuper = true)
+public class TenantDO  extends BaseDO {
 
     /**
      * 套餐编号 - 系统
@@ -75,30 +79,5 @@ public class TenantDO  {
      */
     private Integer accountCount;
 
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-    /**
-     * 最后更新时间
-     */
-    private LocalDateTime updateTime;
-    /**
-     * 创建者，目前使用 SysUser 的 id 编号
-     *
-     * 使用 String 类型的原因是，未来可能会存在非数值的情况，留好拓展性。
-     */
-    private String creator;
-    /**
-     * 更新者，目前使用 SysUser 的 id 编号
-     *
-     * 使用 String 类型的原因是，未来可能会存在非数值的情况，留好拓展性。
-     */
-    private String updater;
-    /**
-     * 是否删除
-     */
-    @TableLogic
-    private Boolean deleted;
 
 }
