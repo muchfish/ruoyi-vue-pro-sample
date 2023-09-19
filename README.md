@@ -348,3 +348,25 @@
              - 不能设置自己为父部门
              - 父岗位是否存在校验
              - 父部门不能是原来的子部门（需要递归校验所有子部门）
+
+
+
+#### Mybatis组件增强
+
+1. [yudao-spring-boot-starter-mybatis]
+
+   1. `BaseMapperX`：在 MyBatis Plus 的`BaseMapper`的基础上拓展，提供更多的能力，简化dal层代码书写
+      1. 增强`selectOne()`
+
+      2. 增强`selectList()`
+
+      3. 提供`insertBatch()`
+
+      4. 提供`updateBatch()`
+
+      5. 提供`saveOrUpdateBatch()`
+   2. `LambdaQueryWrapperX`：拓展 MyBatis Plus `QueryWrapper`类
+      1. 拼接条件的方法，增加 xxxIfPresent 方法，用于判断值不存在的时候，不要拼接到条件中。
+      2. 重写父类方法，方便链式调用
+
+   ​     
