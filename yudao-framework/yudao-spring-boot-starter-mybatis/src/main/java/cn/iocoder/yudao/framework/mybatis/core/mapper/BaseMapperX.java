@@ -1,9 +1,14 @@
 package cn.iocoder.yudao.framework.mybatis.core.mapper;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 
@@ -17,7 +22,13 @@ import java.util.List;
  */
 public interface BaseMapperX<T> extends BaseMapper<T> {
 
-
+    default PageResult<T> selectPage(PageParam pageParam, Wrapper<T> queryWrapper) {
+        // MyBatis Plus 查询
+        IPage<T> mpPage = MyBatisUtils.buildPage(pageParam);
+        selectPage(mpPage, queryWrapper);
+        // 转换返回
+        return new PageResult<>(mpPage.getRecords(), mpPage.getTotal());
+    }
 
     default T selectOne(String field, Object value) {
         return selectOne(new QueryWrapper<T>().eq(field, value));

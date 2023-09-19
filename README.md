@@ -339,7 +339,7 @@
    
    3. 部门管理
       1. 数据库模型
-         ![ruoyi-vue-pro-部门管理[部门管理].png](.image/ruoyi-vue-pro-部门管理[部门管理].png)
+         ![ruoyi-vue-pro-部门管理.png](.image/ruoyi-vue-pro-部门管理.png)
       
       2. CRUD
          - `validateForCreateOrUpdate()`方法：
@@ -370,3 +370,21 @@
       2. 重写父类方法，方便链式调用
 
    ​     
+
+#### 岗位管理
+
+1.  [yudao-common]
+
+   1. 分页查询支持
+
+2. [yudao-spring-boot-starter-mybatis]
+
+   1. 分页查询支持
+
+3. [yudao-module-system-biz]
+
+   1. 岗位管理数据库模型
+
+      ![](.image/ruoyi-vue-pro-岗位管理.png)
+
+   2. CRUD

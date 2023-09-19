@@ -18,6 +18,7 @@
         <!-- 统一依赖管理 -->
         <spring.boot.version>2.7.14</spring.boot.version>
         <!-- Web 相关 -->
+        <springdoc.version>1.7.0</springdoc.version>
         <knife4j.version>4.3.0</knife4j.version>
         <!-- DB 相关 -->
         <druid.version>1.2.18</druid.version>
@@ -74,6 +75,11 @@
                 <version>${knife4j.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
             <!-- DB 相关 -->
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>
