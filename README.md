@@ -280,3 +280,29 @@
 
    1. /login接口中，在登录成功后将用户的token存入缓存中，用于` TokenAuthenticationFilter`中进行token的认证和解析，完善登录认证流程
 
+#### 自定义免登录和免鉴权注解
+
+1. [yudao-spring-boot-starter-security]
+
+   1. 自定义免登录免鉴权注解
+
+      1. @LoginFree：免登录
+      2. @Authenticated：免鉴权
+
+   2. 解析注解配置相应的权限规则（`YudaoWebSecurityConfigurerAdapter`方法`filterChain`中）
+
+      - @PostConstruct：标记一个方法，在对象创建之后，依赖注入完成之后，自动执行该方法。
+
+      - Multimap：多映射Map，相同的key可以有多个值。guava包提供，形如：
+
+        > A → 1
+        > A → 2
+        > b → 3
+
+      - `.permitAll()`：允许任何人访问（无论是否为登录用户）
+
+      - `.authenticated()`：指定任何经过身份验证的用户都允许使用 URL
+
+2. [yudao-module-system-biz]
+
+   1. 登录之前的接口方法上使用@LoginFree进行标注，实现免登录
