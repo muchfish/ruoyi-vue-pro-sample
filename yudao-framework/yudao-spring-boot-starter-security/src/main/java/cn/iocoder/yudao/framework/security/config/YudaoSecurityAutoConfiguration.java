@@ -3,6 +3,8 @@ package cn.iocoder.yudao.framework.security.config;
 import cn.iocoder.yudao.framework.security.core.filter.TokenAuthenticationFilter;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Spring Security 自动配置类，主要用于相关组件的配置
@@ -25,5 +27,15 @@ public class YudaoSecurityAutoConfiguration {
     }
 
 
-
+    /**
+     * Spring Security 加密器
+     * 考虑到安全性，这里采用 BCryptPasswordEncoder 加密器
+     *
+     * @see <a href="http://stackabuse.com/password-encoding-with-spring-security/">Password Encoding with Spring Security</a>
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        //strength – 要使用的原木轮数，介于 4 和 31 之间
+        return new BCryptPasswordEncoder(4);
+    }
 }

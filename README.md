@@ -388,3 +388,10 @@
       ![](.image/ruoyi-vue-pro-岗位管理.png)
 
    2. CRUD
+
+#### Spring Security 密码编码器
+
+1. [yudao-spring-boot-starter-security]
+   1. 配置密码编码器`PasswordEncoder`
+2. [yudao-module-system-biz]
+   1. 登录接口使用密码编码器验证密码

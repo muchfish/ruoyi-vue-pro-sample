@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.user;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.dal.mysql.user.AdminUserMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -21,6 +22,8 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Resource
     private AdminUserMapper userMapper;
+    @Resource
+    private PasswordEncoder passwordEncoder;
 
 
     @Override
@@ -35,8 +38,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public boolean isPasswordMatch(String rawPassword, String encodedPassword) {
-        // TODO: 15/9/2023 密码校验
-        return true;
+        return passwordEncoder.matches(rawPassword,encodedPassword);
     }
 
 
