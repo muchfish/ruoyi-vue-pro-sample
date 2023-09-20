@@ -398,9 +398,10 @@
 
 #### 用户管理
 
-1.  [yudao-module-system-biz]
-   1. 用户管理数据库模型
-	    ![](.image\ruoyi-vue-pro-用户管理.png)
+1. [yudao-module-system-biz]
+   
+	1. 用户管理数据库模型
+	    ![](.image/ruoyi-vue-pro-用户管理.png)
 	
 	2. CRUD
 	
