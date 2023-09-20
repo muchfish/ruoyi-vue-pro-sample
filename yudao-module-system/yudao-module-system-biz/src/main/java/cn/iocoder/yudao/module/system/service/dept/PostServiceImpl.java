@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.service.dept;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostCreateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostPageReqVO;
@@ -13,8 +15,10 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
@@ -120,5 +124,23 @@ public class PostServiceImpl implements PostService {
         return postMapper.selectById(id);
     }
 
-
+    @Override
+    public void validatePostList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        // 获得岗位信息
+        List<PostDO> posts = postMapper.selectBatchIds(ids);
+        Map<Long, PostDO> postMap = convertMap(posts, PostDO::getId);
+        // 校验
+        ids.forEach(id -> {
+            PostDO post = postMap.get(id);
+            if (post == null) {
+                throw exception(POST_NOT_FOUND);
+            }
+            if (!CommonStatusEnum.ENABLE.getStatus().equals(post.getStatus())) {
+                throw exception(POST_NOT_ENABLE, post.getName());
+            }
+        });
+    }
 }

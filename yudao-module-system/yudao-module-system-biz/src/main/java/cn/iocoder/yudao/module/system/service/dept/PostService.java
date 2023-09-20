@@ -66,6 +66,13 @@ public interface PostService {
      */
     PostDO getPost(Long id);
 
-
+    /**
+     * 校验岗位们是否有效。如下情况，视为无效：
+     * 1. 岗位编号不存在
+     * 2. 岗位被禁用
+     *
+     * @param ids 岗位编号数组
+     */
+    void validatePostList(Collection<Long> ids);
 
 }

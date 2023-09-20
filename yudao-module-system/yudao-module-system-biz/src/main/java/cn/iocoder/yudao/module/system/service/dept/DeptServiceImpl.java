@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.service.dept;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptCreateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptListReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptUpdateReqVO;
@@ -15,10 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
@@ -135,7 +133,13 @@ public class DeptServiceImpl implements DeptService {
         return deptMapper.selectById(id);
     }
 
-
+    @Override
+    public List<DeptDO> getDeptList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return deptMapper.selectBatchIds(ids);
+    }
 
     @Override
     public List<DeptDO> getDeptList(DeptListReqVO reqVO) {
@@ -163,6 +167,23 @@ public class DeptServiceImpl implements DeptService {
 
 
 
-
+    @Override
+    public void validateDeptList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        // 获得科室信息
+        Map<Long, DeptDO> deptMap = getDeptMap(ids);
+        // 校验
+        ids.forEach(id -> {
+            DeptDO dept = deptMap.get(id);
+            if (dept == null) {
+                throw exception(DEPT_NOT_FOUND);
+            }
+            if (!CommonStatusEnum.ENABLE.getStatus().equals(dept.getStatus())) {
+                throw exception(DEPT_NOT_ENABLE, dept.getName());
+            }
+        });
+    }
 
 }
