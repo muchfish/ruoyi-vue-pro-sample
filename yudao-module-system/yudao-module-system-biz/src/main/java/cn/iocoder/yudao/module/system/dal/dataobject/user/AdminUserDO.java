@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.dal.dataobject.user;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+import cn.iocoder.yudao.framework.mybatis.core.type.JsonLongSetTypeHandler;
 import cn.iocoder.yudao.module.system.enums.common.SexEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -52,9 +53,9 @@ public class AdminUserDO  extends BaseDO {
      */
     private Long deptId;
     /**
-     * 岗位编号数组 // TODO: 15/9/2023 暂时移除
+     * 岗位编号数组
      */
-    @TableField(exist = false)
+    @TableField(typeHandler = JsonLongSetTypeHandler.class)
     private Set<Long> postIds;
     /**
      * 用户邮箱

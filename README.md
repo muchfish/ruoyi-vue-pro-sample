@@ -438,3 +438,62 @@
 	- @DateTimeFormat：用于请求参数（例如控制器方法的参数）上，以指定日期时间格式化规则，以便在请求处理期间将日期时间字符串转换为 Java 对象（）。
 	
 	  
+
+#### 自定义Bean Validation 和自定义Mybatis Plus的类型处理器（`TypeHandler`）
+
+1.  [yudao-common]
+
+   1. 自定义Bean Validation（`Mobile`同理）
+
+      1. 自定义验证注解`@InEnum`：用于校验参数是否在枚举值范围内
+
+         - `@Constraint`：
+           - `@Constraint` 是 Bean Validation 中的注解，用于创建自定义验证注解。
+           - `validatedBy` 属性：`validatedBy` 属性是 `@Constraint` 注解的一部分，它接受一个验证器类或验证器类的数组。
+           -  Bean Validation 会根据参数字段的类型选择合适的验证器进行验证。
+
+      2. 自定义验证器`InEnumValidator`和`InEnumCollectionValidator`
+
+         1. `InEnumValidator`：验证参数类型为`Integer`的字段的值
+         2. `InEnumCollectionValidator`：验证参数类型为`Collection<Integer>>`的字段的值
+
+         - `ConstraintValidator`：
+           - 这是 Bean Validation 框架提供的一个接口，用于创建自定义验证器。
+           - `initialize`: 在验证器初始化时调用，你可以在这里执行一些初始化操作。
+           - `isValid`: 用于实际验证逻辑的方法，它接收被注解的字段或参数的值，并返回一个布尔值，表示验证是否通过。
+
+      3. 辅助验证的接口`IntArrayValuable`
+
+         1. 辅助@InEnum的验证器获取用于校验的枚举的值
+
+      - `@Target` 注解：`@Target` 是一个元注解，用于指定注解的使用范围。
+        - `ElementType.METHOD`：可以用于方法。
+        - `ElementType.FIELD`：可以用于字段。
+        - `ElementType.ANNOTATION_TYPE`：可以用于其他注解。
+        - `ElementType.CONSTRUCTOR`：可以用于构造函数。
+        - `ElementType.PARAMETER`：可以用于方法参数。
+        - `ElementType.TYPE_USE`：可以用于类型使用处，例如在泛型中。
+      - `@Retention` 注解：`@Retention` 是另一个元注解，用于指定注解的保留策略。在这里，`@InEnum` 注解的保留策略是 `RetentionPolicy.RUNTIME`，表示这个注解将在运行时保留，以便在运行时可以通过反射获取注解信息。
+
+2. [yudao-spring-boot-starter-mybatis]
+
+   1. 自定义`TypeHandler`
+
+      1. 自定义Mybatis Plus类型处理器`JsonLongSetTypeHandler`：实现数据库字符串字段和 Set 并且泛型为 Long的java对象的自动转换 
+
+      - `AbstractJsonTypeHandler`：是 MyBatis Plus 框架中的一个抽象类，用于处理数据库字段与 Java 中的 JSON 类型之间的转换。
+      - `parse()`：json字符串转jaa对象
+      - `toJson`：java对象转json字符串
+
+   2. 使用`TypeHandler`
+
+      ```java
+          /**
+           * 岗位编号数组
+           */
+          @TableField(typeHandler = JsonLongSetTypeHandler.class)
+          private Set<Long> postIds;
+      ```
+
+      
+

@@ -1,6 +1,6 @@
 package cn.iocoder.yudao.framework.common.enums;
 
-
+import cn.iocoder.yudao.framework.common.core.IntArrayValuable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,7 +13,7 @@ import java.util.Arrays;
  */
 @Getter
 @AllArgsConstructor
-public enum CommonStatusEnum{
+public enum CommonStatusEnum implements IntArrayValuable {
 
     ENABLE(0, "开启"),
     DISABLE(1, "关闭");
@@ -29,6 +29,9 @@ public enum CommonStatusEnum{
      */
     private final String name;
 
-
+    @Override
+    public int[] array() {
+        return ARRAYS;
+    }
 
 }
