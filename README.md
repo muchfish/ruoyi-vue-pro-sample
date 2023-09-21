@@ -508,3 +508,11 @@
 
    
 
+#### 角色管理
+
+1. [yudao-module-system-biz]
+   1. 角色管理数据库模型
+      ![](.image/ruoyi-vue-pro-角色管理.png)
+   2. CRUD
+      1. 超级管理员，不允许创建
+      2. 内置角色不允许操作
