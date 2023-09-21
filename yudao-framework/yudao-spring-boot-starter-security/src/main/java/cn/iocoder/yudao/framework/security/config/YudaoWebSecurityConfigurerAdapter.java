@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.method.HandlerMethod;
@@ -31,7 +32,11 @@ import java.util.Set;
 @EnableWebSecurity
 public class YudaoWebSecurityConfigurerAdapter {
 
-
+    /**
+     * 认证失败处理类 Bean
+     */
+    @Resource
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     /**
      * Token 认证过滤器 Bean
@@ -71,7 +76,9 @@ public class YudaoWebSecurityConfigurerAdapter {
     protected SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 // CSRF 禁用
-                .csrf().disable();
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
+        ;
         // 设置每个请求的权限
         httpSecurity
                 // ①：全局共享规则

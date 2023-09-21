@@ -441,9 +441,9 @@
 
 #### 自定义Bean Validation 和自定义Mybatis Plus的类型处理器（`TypeHandler`）
 
-1.  [yudao-common]
+1. [yudao-common]
 
-   1. 自定义Bean Validation（`Mobile`同理）
+   1. 自定义Bean Validation（`@Mobile`同理）
 
       1. 自定义验证注解`@InEnum`：用于校验参数是否在枚举值范围内
 
@@ -495,5 +495,16 @@
           private Set<Long> postIds;
       ```
 
-      
+
+
+
+#### 登录过期时自动转到登录页面重新登录
+
+1. 自定义`AuthenticationEntryPoint`类[AuthenticationEntryPointImpl.java](yudao-framework%2Fyudao-spring-boot-starter-security%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fsecurity%2Fcore%2Fhandler%2FAuthenticationEntryPointImpl.java)
+
+   1. 用户登录过期后返回错误码401，前端接收响应后自动跳转到登录页
+
+   - `AuthenticationEntryPoint`：即使用户已经登录，但由于某些原因（例如会话过期或凭证失效），仍然无法访问受保护的资源。在这种情况下，`AuthenticationEntryPoint` 也会被触发。
+
+   
 
