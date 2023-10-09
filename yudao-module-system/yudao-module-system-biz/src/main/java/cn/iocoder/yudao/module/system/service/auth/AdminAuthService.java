@@ -32,6 +32,10 @@ public interface AdminAuthService {
      */
     AuthLoginRespVO login(@Valid AuthLoginReqVO reqVO);
 
-
-
+    /**
+     * 基于 token 退出登录
+     *
+     * @param token token
+     */
+    void logout(String token);
 }

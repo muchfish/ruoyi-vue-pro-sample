@@ -1,6 +1,8 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleCreateReqVO;
@@ -20,9 +22,11 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
@@ -151,9 +155,42 @@ public class RoleServiceImpl implements RoleService {
 
 
     @Override
+    public List<RoleDO> getRoleList(Collection<Long> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return roleMapper.selectBatchIds(ids);
+    }
+
+
+    @Override
     public PageResult<RoleDO> getRolePage(RolePageReqVO reqVO) {
         return roleMapper.selectPage(reqVO);
     }
 
+
+
+    @Override
+    public boolean hasAnySuperAdmin(Collection<Long> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return false;
+        }
+        RoleServiceImpl self = getSelf();
+        return ids.stream().anyMatch(id -> {
+            RoleDO role = self.getRoleFromCache(id);
+            return role != null && RoleCodeEnum.isSuperAdmin(role.getCode());
+        });
+    }
+
+
+
+    /**
+     * 获得自身的代理对象，解决 AOP 生效问题
+     *
+     * @return 自己
+     */
+    private RoleServiceImpl getSelf() {
+        return SpringUtil.getBean(getClass());
+    }
 
 }

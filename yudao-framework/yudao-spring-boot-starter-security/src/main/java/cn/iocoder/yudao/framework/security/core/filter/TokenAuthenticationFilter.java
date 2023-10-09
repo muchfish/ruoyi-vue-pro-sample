@@ -3,6 +3,7 @@ package cn.iocoder.yudao.framework.security.core.filter;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.redis.core.utils.RedisUtil;
+import cn.iocoder.yudao.framework.security.config.SecurityProperties;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +25,12 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
-
+    private final SecurityProperties securityProperties;
     @Override
     @SuppressWarnings("NullableProblems")
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String token = SecurityFrameworkUtils.obtainAuthorization(request, "Authorization");
+        String token = SecurityFrameworkUtils.obtainAuthorization(request, securityProperties.getTokenHeader());
         if (StrUtil.isNotEmpty(token)) {
             // 1.1 基于 token 构建登录用户
             LoginUser loginUser = buildLoginUserByToken(token);

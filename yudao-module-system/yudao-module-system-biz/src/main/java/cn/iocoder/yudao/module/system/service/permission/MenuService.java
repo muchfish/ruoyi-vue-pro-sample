@@ -37,6 +37,12 @@ public interface MenuService {
      */
     void deleteMenu(Long id);
 
+    /**
+     * 获得所有菜单列表
+     *
+     * @return 菜单列表
+     */
+    List<MenuDO> getMenuList();
 
     /**
      * 基于租户，筛选菜单列表
@@ -65,4 +71,11 @@ public interface MenuService {
     MenuDO getMenu(Long id);
 
 
+    /**
+     * 获得菜单数组
+     *
+     * @param ids 菜单编号数组
+     * @return 菜单数组
+     */
+    List<MenuDO> getMenuList(Collection<Long> ids);
 }

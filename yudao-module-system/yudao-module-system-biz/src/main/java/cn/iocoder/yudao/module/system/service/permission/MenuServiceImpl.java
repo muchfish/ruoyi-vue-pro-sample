@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
@@ -78,6 +79,10 @@ public class MenuServiceImpl implements MenuService {
         menuMapper.deleteById(id);
     }
 
+    @Override
+    public List<MenuDO> getMenuList() {
+        return menuMapper.selectList();
+    }
 
 
     @Override
@@ -98,7 +103,10 @@ public class MenuServiceImpl implements MenuService {
         return menuMapper.selectById(id);
     }
 
-
+    @Override
+    public List<MenuDO> getMenuList(Collection<Long> ids) {
+        return menuMapper.selectBatchIds(ids);
+    }
 
     /**
      * 校验父菜单是否合法

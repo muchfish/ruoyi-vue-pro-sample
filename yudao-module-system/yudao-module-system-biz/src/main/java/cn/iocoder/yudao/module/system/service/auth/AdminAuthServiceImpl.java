@@ -74,6 +74,12 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         return createTokenAfterLoginSuccess(user.getId());
     }
 
+    @Override
+    public void logout(String token) {
+        //删除登录信息
+        RedisUtil.del(token);
+    }
+
     void validateCaptcha(AuthLoginReqVO reqVO) {
         // 如果验证码关闭，则不进行校验
         if (!captchaEnable) {

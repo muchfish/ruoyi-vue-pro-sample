@@ -66,7 +66,13 @@ public interface RoleService {
      */
     RoleDO getRoleFromCache(Long id);
 
-
+    /**
+     * 获得角色列表
+     *
+     * @param ids 角色编号数组
+     * @return 角色列表
+     */
+    List<RoleDO> getRoleList(Collection<Long> ids);
 
     /**
      * 获得角色列表
@@ -87,6 +93,13 @@ public interface RoleService {
     PageResult<RoleDO> getRolePage(RolePageReqVO reqVO);
 
 
+    /**
+     * 判断角色编号数组中，是否有管理员
+     *
+     * @param ids 角色编号数组
+     * @return 是否有管理员
+     */
+    boolean hasAnySuperAdmin(Collection<Long> ids);
 
 
 }
