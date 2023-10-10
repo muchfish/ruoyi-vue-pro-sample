@@ -2,8 +2,10 @@ package cn.iocoder.yudao.module.system.dal.mysql.permission;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.UserRoleDO;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.Collection;
 import java.util.List;
 
 @Mapper
@@ -13,6 +15,10 @@ public interface UserRoleMapper extends BaseMapperX<UserRoleDO> {
         return selectList(UserRoleDO::getUserId, userId);
     }
 
-
+    default void deleteListByUserIdAndRoleIdIds(Long userId, Collection<Long> roleIds) {
+        delete(new LambdaQueryWrapper<UserRoleDO>()
+                .eq(UserRoleDO::getUserId, userId)
+                .in(UserRoleDO::getRoleId, roleIds));
+    }
 
 }

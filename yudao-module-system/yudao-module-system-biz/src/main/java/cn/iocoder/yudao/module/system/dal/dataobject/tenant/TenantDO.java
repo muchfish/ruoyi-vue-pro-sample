@@ -1,12 +1,11 @@
 package cn.iocoder.yudao.module.system.dal.dataobject.tenant;
 
-
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.KeySequence;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
-import org.apache.ibatis.type.JdbcType;
 
 import java.time.LocalDateTime;
 
@@ -16,13 +15,14 @@ import java.time.LocalDateTime;
  * @author 芋道源码
  */
 @TableName(value = "system_tenant", autoResultMap = true)
+@KeySequence("system_tenant_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
+@EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class TenantDO  extends BaseDO {
+public class TenantDO extends BaseDO {
 
     /**
      * 套餐编号 - 系统
@@ -78,6 +78,5 @@ public class TenantDO  extends BaseDO {
      * 账号数量
      */
     private Integer accountCount;
-
 
 }

@@ -44,8 +44,8 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createRole(RoleCreateReqVO reqVO, Integer type) {
-        // 校验角色
-        validateRoleDuplicate(reqVO.getName(), reqVO.getCode(), null);
+        // 校验角色 // TODO: 9/10/2023 暂时注释掉，此处校验角色时sql需要拼接上当前租户的租户id,后续由组件[yudao-spring-boot-starter-biz-tenant]实现
+//        validateRoleDuplicate(reqVO.getName(), reqVO.getCode(), null);
         // 插入到数据库
         RoleDO role = RoleConvert.INSTANCE.convert(reqVO);
         role.setType(ObjectUtil.defaultIfNull(type, RoleTypeEnum.CUSTOM.getType()));
@@ -153,6 +153,10 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.selectListByStatus(statuses);
     }
 
+    @Override
+    public List<RoleDO> getRoleList() {
+        return roleMapper.selectList();
+    }
 
     @Override
     public List<RoleDO> getRoleList(Collection<Long> ids) {

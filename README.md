@@ -561,3 +561,69 @@
    2. 编写登出接口
       - 登出时删除token的redis缓存
 
+#### 租户管理与jackson序列化
+
+1. [yudao-spring-boot-starter-web]
+   1. jackson序列化：Java对象和JSON互相转换的过程
+      1. [LocalDateTimeDeserializer.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fjackson%2Fcore%2Fdatabind%2FLocalDateTimeDeserializer.java)：LocalDateTime反序列化规则，会将毫秒级时间戳反序列化为LocalDateTime
+         - `JsonDeserializer<LocalDateTime>`：表示它是一个用于反序列化LocalDateTime对象的自定义反序列化器。
+         - `public static final LocalDateTimeDeserializer INSTANCE = new LocalDateTimeDeserializer();`：这是一个静态的常量，表示一个单例的LocalDateTimeDeserializer实例。通常，为了节省资源，自定义反序列化器会以单例模式创建，因此通常会有一个常量来表示该实例。
+         - `deserialize()`：覆盖了JsonDeserializer类中的deserialize方法，以提供自定义的反序列化逻辑。
+         - `return LocalDateTime.ofInstant(Instant.ofEpochMilli(p.getValueAsLong()), ZoneId.systemDefault());`：这是实际的反序列化逻辑。它执行以下操作：
+           - `p.getValueAsLong()`：从JsonParser对象中获取时间戳的值，这个时间戳通常表示为毫秒数。 
+           - `Instant.ofEpochMilli(...)`：将毫秒时间戳转换为Instant对象，Instant是Java 8中表示时间戳的类。 
+           - `ZoneId.systemDefault()`：获取系统默认的时区。 
+           - `LocalDateTime.ofInstant(...)`：将Instant对象转换为LocalDateTime对象，考虑了时区信息，从而将时间戳转换为本地日期和时间。
+      2. [LocalDateTimeSerializer.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fjackson%2Fcore%2Fdatabind%2FLocalDateTimeSerializer.java)：LocalDateTime序列化规则，会将LocalDateTime序列化为毫秒级时间戳
+         - `JsonSerializer<LocalDateTime>`：表示它是一个用于序列化LocalDateTime对象的自定义序列化器。
+         - `serialize()`：覆盖了JsonSerializer类中的serialize方法，以提供自定义的序列化逻辑。
+         - `public void serialize(LocalDateTime value, JsonGenerator gen, SerializerProvider serializers) throws IOException`：这是serialize方法的定义，用于实际执行序列化操作。它接受三个参数：
+           - `value`：要序列化的LocalDateTime对象。
+           - `gen`：一个JsonGenerator对象，用于生成JSON数据。
+           - `serializers`：一个SerializerProvider对象，提供了序列化过程中的上下文信息。
+         - `gen.writeNumber(value.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());`：这是实际的序列化逻辑。它执行以下操作：
+           - `value.atZone(ZoneId.systemDefault())`：将LocalDateTime对象与系统默认的时区（ZoneId.systemDefault()）关联，以便将日期时间信息转换为特定时区下的ZonedDateTime对象。
+           - `toInstant()`：将ZonedDateTime对象转换为Instant对象，以便获取时间戳信息。
+           - `toEpochMilli()`：将Instant对象的时间戳转换为毫秒数。
+           - `gen.writeNumber(...)`：使用JsonGenerator对象将毫秒时间戳写入JSON中作为数字。
+      3. [NumberSerializer.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fjackson%2Fcore%2Fdatabind%2FNumberSerializer.java)：Long 序列化规则 会将超长 long 值转换为 string，解决前端 JavaScript 最大安全整数是 2^53-1 的问题
+         - `@JacksonStdImpl`：这是一个Jackson的注解，用于指示该类是Jackson标准实现之一。它可以提高Jackson序列化框架的性能，因为Jackson会根据这个注解的存在来优化一些操作。
+         - NumberSerializer 类继承了com.fasterxml.jackson.databind.ser.std.NumberSerializer类，这是Jackson提供的默认数字序列化器的基类。它提供了一些默认的数字序列化行为。
+         - MAX_SAFE_INTEGER 和 MIN_SAFE_INTEGER 常量：这些常量定义了安全整数的范围。安全整数是在JavaScript中可以精确表示的整数范围，通常是从 -9007199254740991 到 9007199254740991。这些常量将用于检查数字是否在安全整数范围内。
+         - `NumberSerializer 构造函数`：这个构造函数接受一个Class参数，该参数表示要序列化的数字的具体类型，例如Integer.class、Long.class等。在构造函数中，它调用了父类的构造函数，将这个具体的类型传递给父类。
+         - `serialize 方法`：这是一个覆盖了父类方法的自定义序列化逻辑。在序列化数字之前，它首先检查数字是否在安全整数范围内（即在MIN_SAFE_INTEGER和MAX_SAFE_INTEGER之间）。如果在范围内，则使用父类的默认数字序列化方式进行序列化。如果超出了安全整数范围，则将数字值转换为字符串，并使用gen.writeString(value.toString())将其序列化为字符串形式。
+      4. [配置objectMappers](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fjackson%2Fconfig%2FYudaoJacksonAutoConfiguration.java)：
+         - `ObjectMapper`：ObjectMapper是Jackson库中的一个类，用于序列化和反序列化Java对象和JSON。
+         - `SimpleModule`：SimpleModule它是Jackson库中用于定制序列化和反序列化规则的容器。
+         - `.addSerializer()`和`.addDeserializer()`：添加序列化和反序列化规则
+         - `注册SimpleModule到objectMapper`：使用objectMappers参数中的每个ObjectMapper对象，通过循环调用objectMapper.registerModule(simpleModule)方法，将上述定义的SimpleModule注册到每个ObjectMapper中。这样，所有的ObjectMapper都将具有相同的自定义序列化和反序列化规则。
+   - 自定义jackson序列化(反序列化)的思路：
+     1. 创建自定义序列化器(`JsonSerializer`和`JsonDeserializer`)：在序列化（反序列化）器中，你可以定义如何将特定类型的Java对象转换为JSON或（JSON转Java对象）。
+     2. 注册自定义序列化器：需要将（自定义序列化器）注册到Jackson的ObjectMapper中。这可以通过调用objectMapper.registerModule或objectMapper.setSerializerFactory等方法来完成。
+     3. 标注Java对象（应该是和上一个步骤二选一）：如果你希望自定义序列化应用于特定类型的Java对象，你可以使用Jackson的注解，如@JsonSerialize(using = YourCustomSerializer.class)，将自定义序列化器与对象类关联起来。
+2. [yudao-module-system-biz]
+   1. 租户管理数据库模型
+      ![](.image/ruoyi-vue-pro-租户管理.png)
+      - 租户套餐表：主要用于控制租户可使用的菜单权限
+      - 租户表：
+        - 用于划分不同租户出来，隔离数据
+        - 控制租户的过期时间
+        - 控制租户下最大账号数量等
+   2. crud
+      - 租户创建：
+        1. 创建租户，配置租户套餐等
+        2. 创建默认租户管理员角色
+        3. 给默认租户管理员配置选中的租户套餐所拥有的所有菜单权限
+        4. 创建默认租户管用户，并赋予租户管理员角色
+        5. 配置该默认用户为当前租户联系人
+      - 租户更新：
+        - 若租户套餐发生变化时，需要修改该租户下所有角色的菜单权限
+      - 租户套餐创建：
+        - 配置租户可拥有的菜单权限
+      - 租户套餐修改：
+        - 若租户套餐菜单权限发生变化，需要同步更新使用了该租户套餐的所有租户的旗下所有角色的菜单权限
+      - 租户套餐删除：
+        - 校验是否还有使用该租户套餐的租户，无租户使用后方能删除
+      - 内置租户：
+        - 本项目默认配置了租户套餐id为0的内置租户套餐。
+        - 租户套餐id为0的内置租户不可删除

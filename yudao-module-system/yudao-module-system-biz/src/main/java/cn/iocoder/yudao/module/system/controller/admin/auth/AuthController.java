@@ -65,7 +65,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @PermitAll
+    @LoginFree
     @Operation(summary = "登出系统")
     public CommonResult<Boolean> logout(HttpServletRequest request) {
         String token = SecurityFrameworkUtils.obtainAuthorization(request, securityProperties.getTokenHeader());

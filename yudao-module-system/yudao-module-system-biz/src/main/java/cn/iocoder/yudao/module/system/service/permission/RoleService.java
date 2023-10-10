@@ -82,7 +82,12 @@ public interface RoleService {
      */
     List<RoleDO> getRoleListByStatus(Collection<Integer> statuses);
 
-
+    /**
+     * 获得所有角色列表
+     *
+     * @return 角色列表
+     */
+    List<RoleDO> getRoleList();
 
     /**
      * 获得角色分页
