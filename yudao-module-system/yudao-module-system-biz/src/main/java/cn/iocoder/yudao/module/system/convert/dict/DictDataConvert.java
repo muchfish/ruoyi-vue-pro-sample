@@ -1,6 +1,10 @@
 package cn.iocoder.yudao.module.system.convert.dict;
 
-import cn.iocoder.yudao.module.system.controller.admin.dict.vo.DictDataSimpleRespVO;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataRespVO;
+import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataSimpleRespVO;
+import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataUpdateReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictDataDO;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
@@ -14,6 +18,13 @@ public interface DictDataConvert {
 
     List<DictDataSimpleRespVO> convertList(List<DictDataDO> list);
 
+    DictDataRespVO convert(DictDataDO bean);
+
+    PageResult<DictDataRespVO> convertPage(PageResult<DictDataDO> page);
+
+    DictDataDO convert(DictDataUpdateReqVO bean);
+
+    DictDataDO convert(DictDataCreateReqVO bean);
 
 
 }

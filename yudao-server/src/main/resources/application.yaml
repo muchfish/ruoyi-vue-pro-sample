@@ -5,6 +5,9 @@ spring:
     active: local
   banner:
     location: MyBanner.txt
+  main:
+    allow-circular-references: true # 允许循环依赖，因为项目是三层架构，无法避免这个情况。
+
 --- #################### 接口文档配置 ####################
 
 springdoc:
