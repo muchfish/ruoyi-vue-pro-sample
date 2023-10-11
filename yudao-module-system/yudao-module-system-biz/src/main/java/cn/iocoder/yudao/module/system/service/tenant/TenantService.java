@@ -5,8 +5,6 @@ import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantCr
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantUpdateReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
-import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
-import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -90,5 +88,11 @@ public interface TenantService {
      */
     List<TenantDO> getTenantListByPackageId(Long packageId);
 
+    /**
+     * 校验租户是否合法
+     *
+     * @param id 租户编号
+     */
+    void validTenant(Long id);
 
 }

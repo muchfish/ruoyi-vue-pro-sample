@@ -1,12 +1,11 @@
 package cn.iocoder.yudao.module.system.dal.dataobject.user;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
-import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.mybatis.core.type.JsonLongSetTypeHandler;
+import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
 import cn.iocoder.yudao.module.system.enums.common.SexEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
@@ -24,7 +23,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class AdminUserDO  extends BaseDO {
+public class AdminUserDO  extends TenantBaseDO {
 
     /**
      * 用户ID
@@ -89,9 +88,5 @@ public class AdminUserDO  extends BaseDO {
      * 最后登录时间
      */
     private LocalDateTime loginDate;
-    /**
-     * 多租户编号
-     */
-    private Long tenantId;
 
 }

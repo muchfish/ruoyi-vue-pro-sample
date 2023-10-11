@@ -17,7 +17,7 @@
         <module>yudao-spring-boot-starter-redis</module>
         <module>yudao-spring-boot-starter-web</module>
         <module>yudao-spring-boot-starter-security</module>
-
+        <module>yudao-spring-boot-starter-biz-tenant</module>
         <module>yudao-spring-boot-starter-captcha</module>
     </modules>
     <artifactId>yudao-framework</artifactId>

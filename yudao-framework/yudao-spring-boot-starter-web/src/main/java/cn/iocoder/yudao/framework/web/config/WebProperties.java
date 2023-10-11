@@ -3,10 +3,14 @@ package cn.iocoder.yudao.framework.web.config;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 
 
 
+@ConfigurationProperties(prefix = "yudao.web")
+@Validated
 @Data
 public class WebProperties {
 

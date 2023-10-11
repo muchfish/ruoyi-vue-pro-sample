@@ -48,13 +48,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private LoginUser buildLoginUserByToken(String token) {
         try {
-            Integer userId = RedisUtil.get(token);
-            if (Objects.isNull(userId)) {
-                return null;
-            }
-
-            // 构建登录用户
-            return new LoginUser().setId(Long.valueOf(userId));
+            return RedisUtil.get(token);
         } catch (ServiceException serviceException) {
             // 校验 Token 不通过时，考虑到一些接口是无需登录的，所以直接返回 null 即可
             return null;

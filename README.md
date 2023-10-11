@@ -627,3 +627,119 @@
       - 内置租户：
         - 本项目默认配置了租户套餐id为0的内置租户套餐。
         - 租户套餐id为0的内置租户不可删除
+
+
+
+#### 租户业务组件接入
+
+1. [yudao-spring-boot-starter-biz-tenant](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant)
+   1. 多租户Web的封装
+      1. [TenantContextWebFilter.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Fweb%2FTenantContextWebFilter.java)：多租户 Context Web 过滤器
+         - 将请求 Header 中的 tenant-id 解析出来，添加到 `TenantContextHolder` 中，这样后续的 DB 等操作，可以获得到租户编号。
+         - `TenantContextHolder`：多租户上下文 Holder
+         - `OncePerRequestFilter`：一次请求过滤器，保证只执行一次
+      2. [TenantContextHolder.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Fcontext%2FTenantContextHolder.java)：多租户上下文 Holder
+         - 存取租户id
+         - 全局忽略租户开关
+         - `TransmittableThreadLocal`：能够在多线程环境中传递变量的值
+      3. 配置多租户 Context Web 过滤器
+         ```java
+           @Bean
+           public FilterRegistrationBean<TenantContextWebFilter> tenantContextWebFilter() {
+             FilterRegistrationBean<TenantContextWebFilter> registrationBean = new FilterRegistrationBean<>();
+             registrationBean.setFilter(new TenantContextWebFilter());
+             registrationBean.setOrder(WebFilterOrderEnum.TENANT_CONTEXT_FILTER);
+             return registrationBean;
+           }
+         ```
+         - `registrationBean.setOrder(WebFilterOrderEnum.TENANT_CONTEXT_FILTER)`：保证过滤器在Spring Security Filter的过滤器之前。便于在Spring Security中使用到`TenantContextHolder`中存放的租户的值
+   2. 多租户DB的封装
+      1. [TenantDatabaseInterceptor.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Fdb%2FTenantDatabaseInterceptor.java)：MP的租户处理器
+         - `TenantLineHandler`：租户处理器，主要用于在 SQL 查询中动态注入租户标识条件，以确保不同租户之间的数据隔离。
+         - `getTenantId()`：获取租户 ID 值表达式，SQL中动态注入租户标识条件时使用
+         - `ignoreTable(String tableName)`：根据表名判断是否忽略拼接多租户条件
+         - `getTenantIdColumn`：获取租户字段名
+      2. 配置租户拦截器：
+         ```java
+           @Bean
+           public TenantLineInnerInterceptor tenantLineInnerInterceptor(TenantProperties properties,
+                MybatisPlusInterceptor interceptor) {
+                TenantLineInnerInterceptor inner = new TenantLineInnerInterceptor(new TenantDatabaseInterceptor(properties));
+                // 添加到 interceptor 中
+                // 需要加在首个，主要是为了在分页插件前面。这个是 MyBatis Plus 的规定
+                MyBatisUtils.addInterceptor(interceptor, inner, 0);
+                return inner;
+           }
+         ```
+         - `TenantLineInnerInterceptor`：MP的租户拦截器，它在 MyBatis 执行 SQL 语句之前拦截并修改 SQL 查询，以注入租户标识条件。
+         - 将租户拦截器置于拦截器首位
+         - `TenantLineInnerInterceptor`和`TenantLineHandler`：TenantLineInnerInterceptor 依赖于 TenantLineHandler 的实现。当你使用 TenantLineInnerInterceptor 时，你需要为其配置一个具体的 TenantLineHandler 的实现，这个实现会处理租户标识的获取和注入逻辑。
+      3. [TenantBaseDO.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Fdb%2FTenantBaseDO.java)：拓展多租户的 BaseDO 基类
+         - `tenantId`：定义租户字段名（"tenant_id"）
+      4. [TenantProperties.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fconfig%2FTenantProperties.java)：多租户配置
+         - `enable`：租户开关（默认开启，其实没多大用处）
+         - `ignoreUrls`：需要忽略多租户的请求。默认情况下，每个请求需要带上 tenant-id 的请求头。但是，部分请求是无需带上的，例如说获取验证码接口
+         - `ignoreTables`：需要忽略多租户的表。即默认所有表都开启多租户的功能，需忽略的在此配置
+   3. 多租户Security的封装
+      1. [TenantSecurityWebFilter.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Fsecurity%2FTenantSecurityWebFilter.java)：多租户 Security Web 过滤器
+         1. 如果是登陆的用户，校验是否有权限访问该租户，避免越权问题。
+         2. 如果请求未带租户的编号，检查是否是忽略的 URL，否则也不允许访问。
+         3. 校验租户是否合法，例如说被禁用、到期
+         - `ApiRequestFilter`：在`shouldNotFilter()`方法中设置只过滤 API 请求的地址
+      2. 配置多租户 Security Web 过滤器
+         ```java
+           @Bean
+           public FilterRegistrationBean<TenantSecurityWebFilter> tenantSecurityWebFilter(TenantProperties tenantProperties,
+              WebProperties webProperties,
+              GlobalExceptionHandler globalExceptionHandler,
+              TenantFrameworkService tenantFrameworkService) {
+              FilterRegistrationBean<TenantSecurityWebFilter> registrationBean = new FilterRegistrationBean<>();
+              registrationBean.setFilter(new TenantSecurityWebFilter(tenantProperties, webProperties,
+              globalExceptionHandler, tenantFrameworkService));
+              registrationBean.setOrder(WebFilterOrderEnum.TENANT_SECURITY_FILTER);
+              return registrationBean;
+           }
+         ```
+         - `registrationBean.setOrder(WebFilterOrderEnum.TENANT_SECURITY_FILTER);`：保证在 Spring Security 过滤器后面
+
+   4. [TenantUtils.java](yudao-framework\yudao-spring-boot-starter-biz-tenant\src\main\java\cn\iocoder\yudao\framework\tenant\core\util\TenantUtils.java) ：多租户 Util
+      - `execute(Long tenantId, Runnable runnable)`：使用指定租户，执行对应的逻辑。让业务代码和租户获取、切换的逻辑解耦
+
+2. [yudao-common]
+   1. Cache 工具类
+
+      ```java
+          public static <K, V> LoadingCache<K, V> buildAsyncReloadingCache(Duration duration, CacheLoader<K, V> loader) {
+              return CacheBuilder.newBuilder()
+                      // 只阻塞当前数据加载线程，其他线程返回旧值
+                      .refreshAfterWrite(duration)
+                      // 通过 asyncReloading 实现全异步加载，包括 refreshAfterWrite 被阻塞的加载线程
+                      .build(CacheLoader.asyncReloading(loader, Executors.newCachedThreadPool())); 
+          }
+      ```
+
+      > 这代码片段是一个Java类`CacheUtils`，其中定义了一个名为`buildAsyncReloadingCache`的静态方法，用于构建异步刷新（Asynchronous Reloading）的缓存。它使用了Google Guava缓存库（CacheBuilder）和Guava CacheLoader来实现缓存的创建。
+      >
+      > 让我解释这段代码的关键部分：
+      >
+      > 1. `LoadingCache<K, V>`：`LoadingCache` 是Google Guava库中的接口，用于表示具有加载功能的缓存。它支持自动加载缓存项，如果缓存中没有请求的数据，它将使用`CacheLoader`接口的实现来加载数据。
+      >
+      > 2. `buildAsyncReloadingCache` 方法：这是一个公共静态方法，接受两个参数，一个是`Duration`类型的时间段（表示缓存项的刷新时间间隔），另一个是`CacheLoader<K, V>`类型的加载器。
+      >
+      > 3. `CacheBuilder.newBuilder()`：这是Google Guava库中的`CacheBuilder`类的静态方法，用于创建缓存构建器。它允许你配置和定制缓存的行为。
+      >
+      > 4. `.refreshAfterWrite(duration)`：这行代码配置了缓存的刷新策略。它告诉缓存，如果某个缓存项在指定的`duration`时间内没有被访问，那么缓存将异步刷新这个缓存项，以确保数据的新鲜性。`duration`是`buildAsyncReloadingCache`方法的第一个参数。
+      >
+      > 5. `.build(CacheLoader.asyncReloading(loader, Executors.newCachedThreadPool()))`：这行代码创建并返回`LoadingCache`实例。它使用了`CacheLoader.asyncReloading`方法，该方法接受一个`loader`和一个`Executor`。
+      >
+      >    - `loader`是`CacheLoader`的实现，它定义了如何加载缓存项的逻辑。
+      >    - `Executors.newCachedThreadPool()`创建了一个可缓存线程池，用于执行异步刷新任务。
+      >
+      > 所以，`buildAsyncReloadingCache`方法的目的是创建一个支持异步刷新的缓存。当某个缓存项过期后，它不会阻塞请求线程来刷新数据，而是使用线程池中的线程异步地执行刷新操作，以提高性能和响应性。
+      >
+      > 这个方法可以在需要使用缓存的地方调用，以创建一个具有异步刷新功能的缓存对象，这在某些情况下可以提高应用程序的性能和数据的新鲜度。
+   
+3. [yudao-module-system-biz]
+
+   1. 登录时用户信息存放租户id
+   2. 编写校验租户是否合法的逻辑

@@ -19,7 +19,10 @@ public class LoginUser {
      * 用户编号
      */
     private Long id;
-
+    /**
+     * 租户编号
+     */
+    private Long tenantId;
 
 
     // ========== 上下文 ==========
