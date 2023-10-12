@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.system.service.user;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserCreateReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserPageReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserUpdateReqVO;
+import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 
 import javax.validation.Valid;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 后台用户 Service 接口
@@ -79,6 +82,47 @@ public interface AdminUserService {
      * @return 用户对象信息
      */
     AdminUserDO getUser(Long id);
+
+
+    /**
+     * 获得用户列表
+     *
+     * @param ids 用户编号数组
+     * @return 用户列表
+     */
+    List<AdminUserDO> getUserList(Collection<Long> ids);
+
+
+    /**
+     * 获得用户 Map
+     *
+     * @param ids 用户编号数组
+     * @return 用户 Map
+     */
+    default Map<Long, AdminUserDO> getUserMap(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return new HashMap<>();
+        }
+        return CollectionUtils.convertMap(getUserList(ids), AdminUserDO::getId);
+    }
+
+    /**
+     * 获得用户列表
+     *
+     * @param reqVO 列表请求
+     * @return 用户列表
+     */
+    List<AdminUserDO> getUserList(UserExportReqVO reqVO);
+
+
+    /**
+     * 批量导入用户
+     *
+     * @param importUsers     导入用户列表
+     * @param isUpdateSupport 是否支持更新
+     * @return 导入结果
+     */
+    UserImportRespVO importUserList(List<UserImportExcelVO> importUsers, boolean isUpdateSupport);
 
     /**
      * 获得指定状态的用户们

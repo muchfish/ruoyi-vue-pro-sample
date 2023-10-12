@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.controller.admin.dict;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.*;
 import cn.iocoder.yudao.module.system.convert.dict.DictDataConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictDataDO;
@@ -9,11 +10,14 @@ import cn.iocoder.yudao.module.system.service.dict.DictDataService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
@@ -70,5 +74,12 @@ public class DictDataController {
         return success(DictDataConvert.INSTANCE.convert(dictDataService.getDictData(id)));
     }
 
-
+    @GetMapping("/export")
+    @Operation(summary = "导出字典数据")
+    public void export(HttpServletResponse response, @Valid DictDataExportReqVO reqVO) throws IOException {
+        List<DictDataDO> list = dictDataService.getDictDataList(reqVO);
+        List<DictDataExcelVO> data = DictDataConvert.INSTANCE.convertList02(list);
+        // 输出
+        ExcelUtils.write(response, "字典数据.xls", "数据列表", DictDataExcelVO.class, data);
+    }
 }

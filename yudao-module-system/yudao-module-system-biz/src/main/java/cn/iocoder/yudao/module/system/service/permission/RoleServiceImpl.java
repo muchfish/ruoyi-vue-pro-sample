@@ -6,6 +6,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleUpdateReqVO;
 import cn.iocoder.yudao.module.system.convert.permission.RoleConvert;
@@ -44,8 +45,8 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createRole(RoleCreateReqVO reqVO, Integer type) {
-        // 校验角色 // TODO: 9/10/2023 暂时注释掉，此处校验角色时sql需要拼接上当前租户的租户id,后续由组件[yudao-spring-boot-starter-biz-tenant]实现
-//        validateRoleDuplicate(reqVO.getName(), reqVO.getCode(), null);
+        // 校验角色
+        validateRoleDuplicate(reqVO.getName(), reqVO.getCode(), null);
         // 插入到数据库
         RoleDO role = RoleConvert.INSTANCE.convert(reqVO);
         role.setType(ObjectUtil.defaultIfNull(type, RoleTypeEnum.CUSTOM.getType()));
@@ -172,7 +173,10 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.selectPage(reqVO);
     }
 
-
+    @Override
+    public List<RoleDO> getRoleList(RoleExportReqVO reqVO) {
+        return roleMapper.selectList(reqVO);
+    }
 
     @Override
     public boolean hasAnySuperAdmin(Collection<Long> ids) {

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.dal.mysql.user;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserPageReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import org.apache.ibatis.annotations.Mapper;
@@ -34,6 +35,16 @@ public interface AdminUserMapper extends BaseMapperX<AdminUserDO> {
                 .inIfPresent(AdminUserDO::getDeptId, deptIds)
                 .orderByDesc(AdminUserDO::getId));
     }
+
+    default List<AdminUserDO> selectList(UserExportReqVO reqVO, Collection<Long> deptIds) {
+        return selectList(new LambdaQueryWrapperX<AdminUserDO>()
+                .likeIfPresent(AdminUserDO::getUsername, reqVO.getUsername())
+                .likeIfPresent(AdminUserDO::getMobile, reqVO.getMobile())
+                .eqIfPresent(AdminUserDO::getStatus, reqVO.getStatus())
+                .betweenIfPresent(AdminUserDO::getCreateTime, reqVO.getCreateTime())
+                .inIfPresent(AdminUserDO::getDeptId, deptIds));
+    }
+
 
     default List<AdminUserDO> selectListByStatus(Integer status) {
         return selectList(AdminUserDO::getStatus, status);

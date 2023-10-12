@@ -750,4 +750,36 @@
 
 1. 字典管理数据库模型
    ![](.image/ruoyi-vue-pro-字典管理.png)
-   
+
+
+
+#### 接入数据字典组件和excel组件
+
+1. [yudao-spring-boot-starter-biz-dict](yudao-framework%2Fyudao-spring-boot-starter-biz-dict)：数据字典组件。主要作用为通过将字典缓存在内存中，保证性能
+   1. [DictFrameworkUtils.java](yudao-framework\yudao-spring-boot-starter-biz-dict\src\main\java\cn\iocoder\yudao\framework\dict\core\util\DictFrameworkUtils.java) ：数据字典工具类
+      1. 缓存数据。K：字典类型-字典值，V：字典标签
+      2. 缓存数据K。：字典类型-字典标签，V：字典值
+      3. ` String getDictDataLabel(String dictType, String value)`：通过`字典类型-字典值`获取`字典标签`
+      4. `String parseDictDataValue(String dictType, String label)`：解析`字典类型-字典标签`获取到`字典值`
+      5. `DictDataApi`：`yudao-module-system-biz`模块提供的从数据中通过`字典类型-字典值`获取`字典标签`和解析`字典类型-字典标签`获取到`字典值`的Api
+      6. `@SneakyThrows`：在方法上使用`@SneakyThrows`，以指示方法可能会抛出受检异常，而无需显式地捕获或声明这些异常。Lombok 在编译时会生成必要的异常处理代码，从而减少了代码的复杂性。
+2. [yudao-spring-boot-starter-excel](yudao-framework%2Fyudao-spring-boot-starter-excel)：excel组件。基于 EasyExcel 实现 Excel 相关的操作
+   1.  [ExcelUtils.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\util\ExcelUtils.java) ：Excel 工具类，提供excel的读写功能
+       - 提供excel文件读写功能
+       - `autoCloseStream(false)`：禁用EasyExcel默认的自动流关闭功能，交给 Servlet 自己处理，Servlet容器通常会在一个请求结束后自动关闭响应流。
+       - `Class<T> head`：会配合head类字段上的`@ExcelProperty`，自动生成excel的列头
+   2.  [DictConvert.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\convert\DictConvert.java) ：Excel 数据字典转换器。用于java和excel之间字典数据的互相转换
+       - `Converter`： EasyExcel中用于执行Excel数据和Java对象之间的相互转换的接口
+       - `Converter<Object>`：作用于Object类型的字段的转换
+       - `convertToJavaData(...)`：将 Excel 对象转换为 Java 对象
+       - `convertToExcelData(...)`：将 Java 对象转换为 Excel 对象
+       - 使用`DictFrameworkUtils`类完成，`字典值`与`字典标签`的转换
+       - [DictFormat.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\annotations\DictFormat.java) ：用于标注字段的字典类型，辅助`DictConvert`完成`字典值`与`字典标签`的转换
+   3.   [JsonConvert.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\convert\JsonConvert.java) 与 [MoneyConvert.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\convert\MoneyConvert.java) ：同`DictConvert`
+3. [yudao-module-system-biz]中的excel导入导出
+   1. 【租户管理】excel导出
+   2. 【用户管理】导出用户、导入用户模板下载、导入用户
+      - 导入用户时没有校验最大租户配额
+   3. 【角色管理】excel导出
+   4. 【岗位管理】excel导出
+   5. 【字典管理】字典类型导出、字典数据导出

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.controller.admin.dict;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.*;
 import cn.iocoder.yudao.module.system.convert.dict.DictTypeConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictTypeDO;
@@ -9,11 +10,14 @@ import cn.iocoder.yudao.module.system.service.dict.DictTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
@@ -70,5 +74,13 @@ public class DictTypeController {
         return success(DictTypeConvert.INSTANCE.convertList(list));
     }
 
+    @Operation(summary = "导出数据类型")
+    @GetMapping("/export")
+    public void export(HttpServletResponse response, @Valid DictTypeExportReqVO reqVO) throws IOException {
+        List<DictTypeDO> list = dictTypeService.getDictTypeList(reqVO);
+        List<DictTypeExcelVO> data = DictTypeConvert.INSTANCE.convertList02(list);
+        // 输出
+        ExcelUtils.write(response, "字典类型.xls", "类型列表", DictTypeExcelVO.class, data);
+    }
 
 }

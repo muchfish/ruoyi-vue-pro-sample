@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.dict;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataUpdateReqVO;
 import cn.iocoder.yudao.module.system.convert.dict.DictDataConvert;
@@ -54,6 +55,12 @@ public class DictDataServiceImpl implements DictDataService {
         return dictDataMapper.selectPage(reqVO);
     }
 
+    @Override
+    public List<DictDataDO> getDictDataList(DictDataExportReqVO reqVO) {
+        List<DictDataDO> list = dictDataMapper.selectList(reqVO);
+        list.sort(COMPARATOR_TYPE_AND_SORT);
+        return list;
+    }
 
     @Override
     public DictDataDO getDictData(Long id) {
@@ -143,6 +150,14 @@ public class DictDataServiceImpl implements DictDataService {
 
 
 
+    @Override
+    public DictDataDO getDictData(String dictType, String value) {
+        return dictDataMapper.selectByDictTypeAndValue(dictType, value);
+    }
 
+    @Override
+    public DictDataDO parseDictData(String dictType, String label) {
+        return dictDataMapper.selectByDictTypeAndLabel(dictType, label);
+    }
 
 }

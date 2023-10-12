@@ -1,10 +1,14 @@
 package cn.iocoder.yudao.module.system.service.tenant;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantUpdateReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
+import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
+import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -63,6 +67,13 @@ public interface TenantService {
      */
     PageResult<TenantDO> getTenantPage(TenantPageReqVO pageReqVO);
 
+    /**
+     * 获得租户列表, 用于 Excel 导出
+     *
+     * @param exportReqVO 查询条件
+     * @return 租户列表
+     */
+    List<TenantDO> getTenantList(TenantExportReqVO exportReqVO);
 
     /**
      * 获得名字对应的租户
@@ -94,5 +105,4 @@ public interface TenantService {
      * @param id 租户编号
      */
     void validTenant(Long id);
-
 }

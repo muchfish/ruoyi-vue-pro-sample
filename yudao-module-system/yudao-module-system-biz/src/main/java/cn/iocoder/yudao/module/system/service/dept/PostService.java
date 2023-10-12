@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.service.dept;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostUpdateReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
@@ -57,6 +58,13 @@ public interface PostService {
      */
     PageResult<PostDO> getPostPage(PostPageReqVO reqVO);
 
+    /**
+     * 获得岗位列表
+     *
+     * @param reqVO 查询条件
+     * @return 部门列表
+     */
+    List<PostDO> getPostList(PostExportReqVO reqVO);
 
     /**
      * 获得岗位信息

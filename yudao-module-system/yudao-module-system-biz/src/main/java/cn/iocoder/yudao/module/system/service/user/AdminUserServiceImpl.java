@@ -4,11 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
-import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserCreateReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserPageReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserUpdateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
 import cn.iocoder.yudao.module.system.convert.user.UserConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.UserPostDO;
@@ -19,15 +18,13 @@ import cn.iocoder.yudao.module.system.service.dept.DeptService;
 import cn.iocoder.yudao.module.system.service.dept.PostService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -42,6 +39,9 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 @Service("adminUserService")
 @Slf4j
 public class AdminUserServiceImpl implements AdminUserService {
+
+    @Value("${sys.user.init-password:yudaoyuanma}")
+    private String userInitPassword;
 
     @Resource
     private AdminUserMapper userMapper;
@@ -160,6 +160,18 @@ public class AdminUserServiceImpl implements AdminUserService {
 
 
 
+    @Override
+    public List<AdminUserDO> getUserList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return userMapper.selectBatchIds(ids);
+    }
+
+    @Override
+    public List<AdminUserDO> getUserList(UserExportReqVO reqVO) {
+        return userMapper.selectList(reqVO, getDeptCondition(reqVO.getDeptId()));
+    }
 
     /**
      * 获得部门查询条件：查询指定部门的子部门编号们，包括自身
@@ -254,6 +266,45 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (!user.getId().equals(id)) {
             throw exception(USER_MOBILE_EXISTS);
         }
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class) // 添加事务，异常则回滚所有导入
+    public UserImportRespVO importUserList(List<UserImportExcelVO> importUsers, boolean isUpdateSupport) {
+        if (CollUtil.isEmpty(importUsers)) {
+            throw exception(USER_IMPORT_LIST_IS_EMPTY);
+        }
+        UserImportRespVO respVO = UserImportRespVO.builder().createUsernames(new ArrayList<>())
+                .updateUsernames(new ArrayList<>()).failureUsernames(new LinkedHashMap<>()).build();
+        importUsers.forEach(importUser -> {
+            // 校验，判断是否有不符合的原因
+            try {
+                validateUserForCreateOrUpdate(null, null, importUser.getMobile(), importUser.getEmail(),
+                        importUser.getDeptId(), null);
+            } catch (ServiceException ex) {
+                respVO.getFailureUsernames().put(importUser.getUsername(), ex.getMessage());
+                return;
+            }
+            // 判断如果不存在，在进行插入
+            AdminUserDO existUser = userMapper.selectByUsername(importUser.getUsername());
+            if (existUser == null) {
+                userMapper.insert(UserConvert.INSTANCE.convert(importUser)
+                        .setPassword(encodePassword(userInitPassword)).setPostIds(new HashSet<>())); // 设置默认密码及空岗位编号数组
+                respVO.getCreateUsernames().add(importUser.getUsername());
+                return;
+            }
+            // 如果存在，判断是否允许更新
+            if (!isUpdateSupport) {
+                respVO.getFailureUsernames().put(importUser.getUsername(), USER_USERNAME_EXISTS.getMsg());
+                return;
+            }
+            AdminUserDO updateUser = UserConvert.INSTANCE.convert(importUser);
+            updateUser.setId(existUser.getId());
+            userMapper.updateById(updateUser);
+            respVO.getUpdateUsernames().add(importUser.getUsername());
+        });
+        return respVO;
     }
 
 

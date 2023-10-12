@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostUpdateReqVO;
 import cn.iocoder.yudao.module.system.convert.dept.PostConvert;
@@ -118,6 +119,10 @@ public class PostServiceImpl implements PostService {
         return postMapper.selectPage(reqVO);
     }
 
+    @Override
+    public List<PostDO> getPostList(PostExportReqVO reqVO) {
+        return postMapper.selectList(reqVO);
+    }
 
     @Override
     public PostDO getPost(Long id) {

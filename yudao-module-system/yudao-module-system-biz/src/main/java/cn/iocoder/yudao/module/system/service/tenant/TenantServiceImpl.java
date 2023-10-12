@@ -9,6 +9,7 @@ import cn.iocoder.yudao.framework.common.util.date.DateUtils;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleCreateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantUpdateReqVO;
 import cn.iocoder.yudao.module.system.convert.tenant.TenantConvert;
@@ -205,6 +206,10 @@ public class TenantServiceImpl implements TenantService {
         return tenantMapper.selectPage(pageReqVO);
     }
 
+    @Override
+    public List<TenantDO> getTenantList(TenantExportReqVO exportReqVO) {
+        return tenantMapper.selectList(exportReqVO);
+    }
 
     @Override
     public TenantDO getTenantByName(String name) {
@@ -220,6 +225,7 @@ public class TenantServiceImpl implements TenantService {
     public List<TenantDO> getTenantListByPackageId(Long packageId) {
         return tenantMapper.selectListByPackageId(packageId);
     }
+
 
 
     private static boolean isSystemTenant(TenantDO tenant) {

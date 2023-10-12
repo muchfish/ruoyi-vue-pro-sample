@@ -1,9 +1,6 @@
 package cn.iocoder.yudao.module.system.convert.permission;
 
-import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleCreateReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleRespVO;
-import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleSimpleRespVO;
-import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleUpdateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.*;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
@@ -23,5 +20,6 @@ public interface RoleConvert {
 
     List<RoleSimpleRespVO> convertList02(List<RoleDO> list);
 
+    List<RoleExcelVO> convertList03(List<RoleDO> list);
 
 }

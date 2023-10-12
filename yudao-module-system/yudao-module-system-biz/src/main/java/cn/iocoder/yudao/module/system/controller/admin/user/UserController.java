@@ -4,27 +4,32 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
 import cn.iocoder.yudao.module.system.convert.user.UserConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
+import cn.iocoder.yudao.module.system.enums.common.SexEnum;
 import cn.iocoder.yudao.module.system.service.dept.DeptService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - 用户")
 @RestController
@@ -114,5 +119,60 @@ public class UserController {
         return success(UserConvert.INSTANCE.convert(user).setDept(UserConvert.INSTANCE.convert(dept)));
     }
 
+    @GetMapping("/export")
+    @Operation(summary = "导出用户")
+    public void exportUserList(@Validated UserExportReqVO reqVO,
+                               HttpServletResponse response) throws IOException {
+        // 获得用户列表
+        List<AdminUserDO> users = userService.getUserList(reqVO);
+
+        // 获得拼接需要的数据
+        Collection<Long> deptIds = convertList(users, AdminUserDO::getDeptId);
+        Map<Long, DeptDO> deptMap = deptService.getDeptMap(deptIds);
+        Map<Long, AdminUserDO> deptLeaderUserMap = userService.getUserMap(
+                convertSet(deptMap.values(), DeptDO::getLeaderUserId));
+        // 拼接数据
+        List<UserExcelVO> excelUsers = new ArrayList<>(users.size());
+        users.forEach(user -> {
+            UserExcelVO excelVO = UserConvert.INSTANCE.convert02(user);
+            // 设置部门
+            MapUtils.findAndThen(deptMap, user.getDeptId(), dept -> {
+                excelVO.setDeptName(dept.getName());
+                // 设置部门负责人的名字
+                MapUtils.findAndThen(deptLeaderUserMap, dept.getLeaderUserId(),
+                        deptLeaderUser -> excelVO.setDeptLeaderNickname(deptLeaderUser.getNickname()));
+            });
+            excelUsers.add(excelVO);
+        });
+
+        // 输出
+        ExcelUtils.write(response, "用户数据.xls", "用户列表", UserExcelVO.class, excelUsers);
+    }
+
+    @GetMapping("/get-import-template")
+    public void importTemplate(HttpServletResponse response) throws IOException {
+        // 手动创建导出 demo
+        List<UserImportExcelVO> list = Arrays.asList(
+                UserImportExcelVO.builder().username("yunai").deptId(1L).email("yunai@iocoder.cn").mobile("15601691300")
+                        .nickname("芋道").status(CommonStatusEnum.ENABLE.getStatus()).sex(SexEnum.MALE.getSex()).build(),
+                UserImportExcelVO.builder().username("yuanma").deptId(2L).email("yuanma@iocoder.cn").mobile("15601701300")
+                        .nickname("源码").status(CommonStatusEnum.DISABLE.getStatus()).sex(SexEnum.FEMALE.getSex()).build()
+        );
+
+        // 输出
+        ExcelUtils.write(response, "用户导入模板.xls", "用户列表", UserImportExcelVO.class, list);
+    }
+
+    @PostMapping("/import")
+    @Operation(summary = "导入用户")
+    @Parameters({
+            @Parameter(name = "file", description = "Excel 文件", required = true),
+            @Parameter(name = "updateSupport", description = "是否支持更新，默认为 false", example = "true")
+    })
+    public CommonResult<UserImportRespVO> importExcel(@RequestParam("file") MultipartFile file,
+                                                      @RequestParam(value = "updateSupport", required = false, defaultValue = "false") Boolean updateSupport) throws Exception {
+        List<UserImportExcelVO> list = ExcelUtils.read(file, UserImportExcelVO.class);
+        return success(userService.importUserList(list, updateSupport));
+    }
 
 }

@@ -2,23 +2,22 @@ package cn.iocoder.yudao.module.system.controller.admin.tenant;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.security.core.annotation.LoginFree;
-import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantCreateReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantRespVO;
-import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantUpdateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.*;
 import cn.iocoder.yudao.module.system.convert.tenant.TenantConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.annotation.security.PermitAll;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
+import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
@@ -75,5 +74,13 @@ public class TenantController {
         return success(TenantConvert.INSTANCE.convertPage(pageResult));
     }
 
-
+    @GetMapping("/export-excel")
+    @Operation(summary = "导出租户 Excel")
+    public void exportTenantExcel(@Valid TenantExportReqVO exportReqVO,
+                                  HttpServletResponse response) throws IOException {
+        List<TenantDO> list = tenantService.getTenantList(exportReqVO);
+        // 导出 Excel
+        List<TenantExcelVO> datas = TenantConvert.INSTANCE.convertList02(list);
+        ExcelUtils.write(response, "租户.xls", "数据", TenantExcelVO.class, datas);
+    }
 }

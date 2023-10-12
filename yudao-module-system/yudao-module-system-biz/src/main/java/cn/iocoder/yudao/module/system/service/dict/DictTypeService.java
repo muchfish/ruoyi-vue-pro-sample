@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.service.dict;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypeCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypeExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypeUpdateReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictTypeDO;
@@ -45,6 +46,13 @@ public interface DictTypeService {
      */
     PageResult<DictTypeDO> getDictTypePage(DictTypePageReqVO reqVO);
 
+    /**
+     * 获得字典类型列表
+     *
+     * @param reqVO 列表请求
+     * @return 字典类型列表
+     */
+    List<DictTypeDO> getDictTypeList(DictTypeExportReqVO reqVO);
 
     /**
      * 获得字典类型详情

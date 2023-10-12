@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.service.permission;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleUpdateReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
@@ -97,6 +98,13 @@ public interface RoleService {
      */
     PageResult<RoleDO> getRolePage(RolePageReqVO reqVO);
 
+    /**
+     * 获得角色列表
+     *
+     * @param reqVO 列表查询
+     * @return 角色列表
+     */
+    List<RoleDO> getRoleList(RoleExportReqVO reqVO);
 
     /**
      * 判断角色编号数组中，是否有管理员

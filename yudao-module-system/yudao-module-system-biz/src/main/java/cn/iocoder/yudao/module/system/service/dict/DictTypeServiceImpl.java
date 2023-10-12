@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypeCreateReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypeExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypeUpdateReqVO;
 import cn.iocoder.yudao.module.system.convert.dict.DictTypeConvert;
@@ -38,6 +39,10 @@ public class DictTypeServiceImpl implements DictTypeService {
         return dictTypeMapper.selectPage(reqVO);
     }
 
+    @Override
+    public List<DictTypeDO> getDictTypeList(DictTypeExportReqVO reqVO) {
+        return dictTypeMapper.selectList(reqVO);
+    }
 
     @Override
     public DictTypeDO getDictType(Long id) {

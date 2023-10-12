@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.controller.admin.permission;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.*;
 import cn.iocoder.yudao.module.system.convert.permission.RoleConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
@@ -14,7 +15,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
@@ -81,5 +84,12 @@ public class RoleController {
         return success(RoleConvert.INSTANCE.convertList02(list));
     }
 
+    @GetMapping("/export-excel")
+    public void export(HttpServletResponse response, @Validated RoleExportReqVO reqVO) throws IOException {
+        List<RoleDO> list = roleService.getRoleList(reqVO);
+        List<RoleExcelVO> data = RoleConvert.INSTANCE.convertList03(list);
+        // 输出
+        ExcelUtils.write(response, "角色数据.xls", "角色列表", RoleExcelVO.class, data);
+    }
 
 }

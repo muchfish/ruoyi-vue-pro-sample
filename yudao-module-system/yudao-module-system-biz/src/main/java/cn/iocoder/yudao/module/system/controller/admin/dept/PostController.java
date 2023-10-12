@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.controller.admin.dept;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.*;
 import cn.iocoder.yudao.module.system.convert.dept.PostConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
@@ -10,11 +11,14 @@ import cn.iocoder.yudao.module.system.service.dept.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -74,6 +78,13 @@ public class PostController {
         return success(PostConvert.INSTANCE.convertPage(postService.getPostPage(reqVO)));
     }
 
-
+    @GetMapping("/export")
+    @Operation(summary = "岗位管理")
+    public void export(HttpServletResponse response, @Validated PostExportReqVO reqVO) throws IOException {
+        List<PostDO> posts = postService.getPostList(reqVO);
+        List<PostExcelVO> data = PostConvert.INSTANCE.convertList03(posts);
+        // 输出
+        ExcelUtils.write(response, "岗位数据.xls", "岗位列表", PostExcelVO.class, data);
+    }
 
 }
