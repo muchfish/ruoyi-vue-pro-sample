@@ -14,6 +14,22 @@ import static java.util.Collections.singleton;
  */
 public interface PermissionService {
 
+    /**
+     * 判断是否有权限，任一一个即可
+     *
+     * @param userId      用户编号
+     * @param permissions 权限
+     * @return 是否
+     */
+    boolean hasAnyPermissions(Long userId, String... permissions);
+
+    /**
+     * 判断是否有角色，任一一个即可
+     *
+     * @param roles 角色数组
+     * @return 是否
+     */
+    boolean hasAnyRoles(Long userId, String... roles);
 
     // ========== 角色-菜单的相关方法  ==========
 
@@ -24,13 +40,7 @@ public interface PermissionService {
      * @param menuIds 菜单编号集合
      */
     void assignRoleMenu(Long roleId, Set<Long> menuIds);
-    /**
-     * 设置用户角色
-     *
-     * @param userId  角色编号
-     * @param roleIds 角色编号集合
-     */
-    void assignUserRole(Long userId, Set<Long> roleIds);
+
 
     /**
      * 获得角色拥有的菜单编号集合
@@ -50,7 +60,25 @@ public interface PermissionService {
      */
     Set<Long> getRoleMenuListByRoleId(Collection<Long> roleIds);
 
+    /**
+     * 获得拥有指定菜单的角色编号数组，从缓存中获取
+     *
+     * @param menuId 菜单编号
+     * @return 角色编号数组
+     */
+    Set<Long> getMenuRoleIdListByMenuIdFromCache(Long menuId);
+
     // ========== 用户-角色的相关方法  ==========
+
+    /**
+     * 设置用户角色
+     *
+     * @param userId  角色编号
+     * @param roleIds 角色编号集合
+     */
+    void assignUserRole(Long userId, Set<Long> roleIds);
+
+
     /**
      * 获得用户拥有的角色编号集合
      *
@@ -59,7 +87,13 @@ public interface PermissionService {
      */
     Set<Long> getUserRoleIdListByUserId(Long userId);
 
-
+    /**
+     * 获得用户拥有的角色编号集合，从缓存中获取
+     *
+     * @param userId 用户编号
+     * @return 角色编号集合
+     */
+    Set<Long> getUserRoleIdListByUserIdFromCache(Long userId);
 
     // ========== 用户-部门的相关方法  ==========
 

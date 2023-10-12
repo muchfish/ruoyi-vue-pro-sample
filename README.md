@@ -783,3 +783,26 @@
    3. 【角色管理】excel导出
    4. 【岗位管理】excel导出
    5. 【字典管理】字典类型导出、字典数据导出
+
+#### 使用Spring Security的`@PreAuthorize`实现接口权限控制
+
+1. [yudao-spring-boot-starter-security]：启用`@PreAuthorize`接口权限控制的支持
+
+   1. `@EnableGlobalMethodSecurity(prePostEnabled = true)`：开启Spring Security的`@PreAuthorize`支持
+
+      - `@EnableGlobalMethodSecurity`：启用方法级别的安全性控制
+      - `prePostEnabled = true`：用于启用方法级别的安全控制中的 `@PreAuthorize` 和 `@PostAuthorize` 注解
+      -  `@PreAuthorize`：用于在方法执行前进行权限验证。它允许你定义方法级别的安全控制规则，只有当规则中指定的条件满足时(EL表达式结果为true时)，方法才能被执行。
+
+   2. [SecurityFrameworkService.java](yudao-framework\yudao-spring-boot-starter-security\src\main\java\cn\iocoder\yudao\framework\security\core\service\SecurityFrameworkService.java)：定义权限相关的校验操作。用于`@PreAuthorize`的EL表达式中使用
+
+   3. 配置`SecurityFrameworkService`的bean，取别名`ss`简化引用
+
+      ```java
+          @Bean("ss") // 使用 Spring Security 的缩写，方便使用
+          public SecurityFrameworkService securityFrameworkService(PermissionApi permissionApi) {
+              return new SecurityFrameworkServiceImpl(permissionApi);
+          }
+      ```
+
+2. [yudao-module-system-biz]：应用`@PreAuthorize`完成接口权限控制

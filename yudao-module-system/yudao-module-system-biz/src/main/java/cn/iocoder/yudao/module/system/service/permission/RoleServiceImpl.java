@@ -167,6 +167,15 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.selectBatchIds(ids);
     }
 
+    @Override
+    public List<RoleDO> getRoleListFromCache(Collection<Long> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        // 这里采用 for 循环从缓存中获取，主要考虑 Spring CacheManager 无法批量操作的问题
+        RoleServiceImpl self = getSelf();
+        return convertList(ids, self::getRoleFromCache);
+    }
 
     @Override
     public PageResult<RoleDO> getRolePage(RolePageReqVO reqVO) {

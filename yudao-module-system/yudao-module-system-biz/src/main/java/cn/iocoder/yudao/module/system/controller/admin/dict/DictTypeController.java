@@ -33,6 +33,7 @@ public class DictTypeController {
 
     @PostMapping("/create")
     @Operation(summary = "创建字典类型")
+    @PreAuthorize("@ss.hasPermission('system:dict:create')")
     public CommonResult<Long> createDictType(@Valid @RequestBody DictTypeCreateReqVO reqVO) {
         Long dictTypeId = dictTypeService.createDictType(reqVO);
         return success(dictTypeId);
@@ -40,6 +41,7 @@ public class DictTypeController {
 
     @PutMapping("/update")
     @Operation(summary = "修改字典类型")
+    @PreAuthorize("@ss.hasPermission('system:dict:update')")
     public CommonResult<Boolean> updateDictType(@Valid @RequestBody DictTypeUpdateReqVO reqVO) {
         dictTypeService.updateDictType(reqVO);
         return success(true);
@@ -48,6 +50,7 @@ public class DictTypeController {
     @DeleteMapping("/delete")
     @Operation(summary = "删除字典类型")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
+    @PreAuthorize("@ss.hasPermission('system:dict:delete')")
     public CommonResult<Boolean> deleteDictType(Long id) {
         dictTypeService.deleteDictType(id);
         return success(true);
@@ -55,6 +58,7 @@ public class DictTypeController {
 
     @Operation(summary = "/获得字典类型的分页列表")
     @GetMapping("/page")
+    @PreAuthorize("@ss.hasPermission('system:dict:query')")
     public CommonResult<PageResult<DictTypeRespVO>> pageDictTypes(@Valid DictTypePageReqVO reqVO) {
         return success(DictTypeConvert.INSTANCE.convertPage(dictTypeService.getDictTypePage(reqVO)));
     }
@@ -62,6 +66,7 @@ public class DictTypeController {
     @Operation(summary = "/查询字典类型详细")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @GetMapping(value = "/get")
+    @PreAuthorize("@ss.hasPermission('system:dict:query')")
     public CommonResult<DictTypeRespVO> getDictType(@RequestParam("id") Long id) {
         return success(DictTypeConvert.INSTANCE.convert(dictTypeService.getDictType(id)));
     }
@@ -76,6 +81,7 @@ public class DictTypeController {
 
     @Operation(summary = "导出数据类型")
     @GetMapping("/export")
+    @PreAuthorize("@ss.hasPermission('system:dict:query')")
     public void export(HttpServletResponse response, @Valid DictTypeExportReqVO reqVO) throws IOException {
         List<DictTypeDO> list = dictTypeService.getDictTypeList(reqVO);
         List<DictTypeExcelVO> data = DictTypeConvert.INSTANCE.convertList02(list);

@@ -2,6 +2,9 @@ package cn.iocoder.yudao.framework.security.config;
 
 import cn.iocoder.yudao.framework.security.core.filter.TokenAuthenticationFilter;
 import cn.iocoder.yudao.framework.security.core.handler.AuthenticationEntryPointImpl;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkServiceImpl;
+import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -53,4 +56,10 @@ public class YudaoSecurityAutoConfiguration {
         //strength – 要使用的原木轮数，介于 4 和 31 之间
         return new BCryptPasswordEncoder(4);
     }
+
+    @Bean("ss") // 使用 Spring Security 的缩写，方便使用
+    public SecurityFrameworkService securityFrameworkService(PermissionApi permissionApi) {
+        return new SecurityFrameworkServiceImpl(permissionApi);
+    }
+
 }

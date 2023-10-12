@@ -76,6 +76,14 @@ public interface RoleService {
     List<RoleDO> getRoleList(Collection<Long> ids);
 
     /**
+     * 获得角色数组，从缓存中
+     *
+     * @param ids 角色编号数组
+     * @return 角色数组
+     */
+    List<RoleDO> getRoleListFromCache(Collection<Long> ids);
+
+    /**
      * 获得角色列表
      *
      * @param statuses 筛选的状态

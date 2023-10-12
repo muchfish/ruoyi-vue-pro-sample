@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +45,7 @@ public class UserController {
 
     @PostMapping("/create")
     @Operation(summary = "新增用户")
+    @PreAuthorize("@ss.hasPermission('system:user:create')")
     public CommonResult<Long> createUser(@Valid @RequestBody UserCreateReqVO reqVO) {
         Long id = userService.createUser(reqVO);
         return success(id);
@@ -51,6 +53,7 @@ public class UserController {
 
     @PutMapping("update")
     @Operation(summary = "修改用户")
+    @PreAuthorize("@ss.hasPermission('system:user:update')")
     public CommonResult<Boolean> updateUser(@Valid @RequestBody UserUpdateReqVO reqVO) {
         userService.updateUser(reqVO);
         return success(true);
@@ -59,6 +62,7 @@ public class UserController {
     @DeleteMapping("/delete")
     @Operation(summary = "删除用户")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
+    @PreAuthorize("@ss.hasPermission('system:user:delete')")
     public CommonResult<Boolean> deleteUser(@RequestParam("id") Long id) {
         userService.deleteUser(id);
         return success(true);
@@ -66,6 +70,7 @@ public class UserController {
 
     @PutMapping("/update-password")
     @Operation(summary = "重置用户密码")
+    @PreAuthorize("@ss.hasPermission('system:user:update-password')")
     public CommonResult<Boolean> updateUserPassword(@Valid @RequestBody UserUpdatePasswordReqVO reqVO) {
         userService.updateUserPassword(reqVO.getId(), reqVO.getPassword());
         return success(true);
@@ -73,6 +78,7 @@ public class UserController {
 
     @PutMapping("/update-status")
     @Operation(summary = "修改用户状态")
+    @PreAuthorize("@ss.hasPermission('system:user:update')")
     public CommonResult<Boolean> updateUserStatus(@Valid @RequestBody UserUpdateStatusReqVO reqVO) {
         userService.updateUserStatus(reqVO.getId(), reqVO.getStatus());
         return success(true);
@@ -80,6 +86,7 @@ public class UserController {
 
     @GetMapping("/page")
     @Operation(summary = "获得用户分页列表")
+    @PreAuthorize("@ss.hasPermission('system:user:list')")
     public CommonResult<PageResult<UserPageItemRespVO>> getUserPage(@Valid UserPageReqVO reqVO) {
         // 获得用户分页列表
         PageResult<AdminUserDO> pageResult = userService.getUserPage(reqVO);
@@ -112,6 +119,7 @@ public class UserController {
     @GetMapping("/get")
     @Operation(summary = "获得用户详情")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
     public CommonResult<UserRespVO> getUser(@RequestParam("id") Long id) {
         AdminUserDO user = userService.getUser(id);
         // 获得部门数据
@@ -121,6 +129,7 @@ public class UserController {
 
     @GetMapping("/export")
     @Operation(summary = "导出用户")
+    @PreAuthorize("@ss.hasPermission('system:user:export')")
     public void exportUserList(@Validated UserExportReqVO reqVO,
                                HttpServletResponse response) throws IOException {
         // 获得用户列表
@@ -150,6 +159,7 @@ public class UserController {
     }
 
     @GetMapping("/get-import-template")
+    @Operation(summary = "获得导入用户模板")
     public void importTemplate(HttpServletResponse response) throws IOException {
         // 手动创建导出 demo
         List<UserImportExcelVO> list = Arrays.asList(
@@ -169,6 +179,7 @@ public class UserController {
             @Parameter(name = "file", description = "Excel 文件", required = true),
             @Parameter(name = "updateSupport", description = "是否支持更新，默认为 false", example = "true")
     })
+    @PreAuthorize("@ss.hasPermission('system:user:import')")
     public CommonResult<UserImportRespVO> importExcel(@RequestParam("file") MultipartFile file,
                                                       @RequestParam(value = "updateSupport", required = false, defaultValue = "false") Boolean updateSupport) throws Exception {
         List<UserImportExcelVO> list = ExcelUtils.read(file, UserImportExcelVO.class);

@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 import static cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO.ID_ROOT;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
@@ -84,7 +85,6 @@ public class MenuServiceImpl implements MenuService {
         return menuMapper.selectList();
     }
 
-
     @Override
     public List<MenuDO> getMenuListByTenant(MenuListReqVO reqVO) {
         List<MenuDO> menus = getMenuList(reqVO);
@@ -96,7 +96,11 @@ public class MenuServiceImpl implements MenuService {
         return menuMapper.selectList(reqVO);
     }
 
-
+    @Override
+    public List<Long> getMenuIdListByPermissionFromCache(String permission) {
+        List<MenuDO> menus = menuMapper.selectListByPermission(permission);
+        return convertList(menus, MenuDO::getId);
+    }
 
     @Override
     public MenuDO getMenu(Long id) {

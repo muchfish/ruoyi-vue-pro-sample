@@ -36,6 +36,7 @@ public class PostController {
 
     @PostMapping("/create")
     @Operation(summary = "创建岗位")
+    @PreAuthorize("@ss.hasPermission('system:post:create')")
     public CommonResult<Long> createPost(@Valid @RequestBody PostCreateReqVO reqVO) {
         Long postId = postService.createPost(reqVO);
         return success(postId);
@@ -43,6 +44,7 @@ public class PostController {
 
     @PutMapping("/update")
     @Operation(summary = "修改岗位")
+    @PreAuthorize("@ss.hasPermission('system:post:update')")
     public CommonResult<Boolean> updatePost(@Valid @RequestBody PostUpdateReqVO reqVO) {
         postService.updatePost(reqVO);
         return success(true);
@@ -50,6 +52,7 @@ public class PostController {
 
     @DeleteMapping("/delete")
     @Operation(summary = "删除岗位")
+    @PreAuthorize("@ss.hasPermission('system:post:delete')")
     public CommonResult<Boolean> deletePost(@RequestParam("id") Long id) {
         postService.deletePost(id);
         return success(true);
@@ -58,6 +61,7 @@ public class PostController {
     @GetMapping(value = "/get")
     @Operation(summary = "获得岗位信息")
     @Parameter(name = "id", description = "岗位编号", required = true, example = "1024")
+    @PreAuthorize("@ss.hasPermission('system:post:query')")
     public CommonResult<PostRespVO> getPost(@RequestParam("id") Long id) {
         return success(PostConvert.INSTANCE.convert(postService.getPost(id)));
     }
@@ -74,12 +78,14 @@ public class PostController {
 
     @GetMapping("/page")
     @Operation(summary = "获得岗位分页列表")
+    @PreAuthorize("@ss.hasPermission('system:post:query')")
     public CommonResult<PageResult<PostRespVO>> getPostPage(@Validated PostPageReqVO reqVO) {
         return success(PostConvert.INSTANCE.convertPage(postService.getPostPage(reqVO)));
     }
 
     @GetMapping("/export")
     @Operation(summary = "岗位管理")
+    @PreAuthorize("@ss.hasPermission('system:post:export')")
     public void export(HttpServletResponse response, @Validated PostExportReqVO reqVO) throws IOException {
         List<PostDO> posts = postService.getPostList(reqVO);
         List<PostExcelVO> data = PostConvert.INSTANCE.convertList03(posts);

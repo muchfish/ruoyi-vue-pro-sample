@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.system.service.permission;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
@@ -11,8 +13,9 @@ import cn.iocoder.yudao.module.system.dal.dataobject.permission.UserRoleDO;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.RoleMenuMapper;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.UserRoleMapper;
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -42,10 +45,74 @@ public class PermissionServiceImpl implements PermissionService {
     @Resource
     private MenuService menuService;
 
+    @Override
+    public boolean hasAnyPermissions(Long userId, String... permissions) {
+        // 如果为空，说明已经有权限
+        if (ArrayUtil.isEmpty(permissions)) {
+            return true;
+        }
 
+        // 获得当前登录的角色。如果为空，说明没有权限
+        List<RoleDO> roles = getEnableUserRoleListByUserIdFromCache(userId);
+        if (CollUtil.isEmpty(roles)) {
+            return false;
+        }
 
+        // 情况一：遍历判断每个权限，如果有一满足，说明有权限
+        for (String permission : permissions) {
+            if (hasAnyPermission(roles, permission)) {
+                return true;
+            }
+        }
 
+        // 情况二：如果是超管，也说明有权限
+        return roleService.hasAnySuperAdmin(convertSet(roles, RoleDO::getId));
+    }
 
+    /**
+     * 判断指定角色，是否拥有该 permission 权限
+     *
+     * @param roles 指定角色数组
+     * @param permission 权限标识
+     * @return 是否拥有
+     */
+    private boolean hasAnyPermission(List<RoleDO> roles, String permission) {
+        List<Long> menuIds = menuService.getMenuIdListByPermissionFromCache(permission);
+        // 采用严格模式，如果权限找不到对应的 Menu 的话，也认为没有权限
+        if (CollUtil.isEmpty(menuIds)) {
+            return false;
+        }
+
+        // 判断是否有权限
+        Set<Long> roleIds = convertSet(roles, RoleDO::getId);
+        for (Long menuId : menuIds) {
+            // 获得拥有该菜单的角色编号集合
+            Set<Long> menuRoleIds = getSelf().getMenuRoleIdListByMenuIdFromCache(menuId);
+            // 如果有交集，说明有权限
+            if (CollUtil.containsAny(menuRoleIds, roleIds)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean hasAnyRoles(Long userId, String... roles) {
+        // 如果为空，说明已经有权限
+        if (ArrayUtil.isEmpty(roles)) {
+            return true;
+        }
+
+        // 获得当前登录的角色。如果为空，说明没有权限
+        List<RoleDO> roleList = getEnableUserRoleListByUserIdFromCache(userId);
+        if (CollUtil.isEmpty(roleList)) {
+            return false;
+        }
+
+        // 判断是否有角色
+        Set<String> userRoles = convertSet(roleList, RoleDO::getCode);
+        return CollUtil.containsAny(userRoles, Sets.newHashSet(roles));
+    }
 
     // ========== 角色-菜单的相关方法  ==========
 
@@ -85,7 +152,10 @@ public class PermissionServiceImpl implements PermissionService {
         return convertSet(roleMenuMapper.selectListByRoleId(roleIds), RoleMenuDO::getMenuId);
     }
 
-
+    @Override
+    public Set<Long> getMenuRoleIdListByMenuIdFromCache(Long menuId) {
+        return convertSet(roleMenuMapper.selectListByMenuId(menuId), RoleMenuDO::getRoleId);
+    }
 
     // ========== 用户-角色的相关方法  ==========
 
@@ -117,8 +187,28 @@ public class PermissionServiceImpl implements PermissionService {
         return convertSet(userRoleMapper.selectListByUserId(userId), UserRoleDO::getRoleId);
     }
 
+    @Override
+    public Set<Long> getUserRoleIdListByUserIdFromCache(Long userId) {
+        return getUserRoleIdListByUserId(userId);
+    }
 
 
+
+    /**
+     * 获得用户拥有的角色，并且这些角色是开启状态的
+     *
+     * @param userId 用户编号
+     * @return 用户拥有的角色
+     */
+    @VisibleForTesting
+    List<RoleDO> getEnableUserRoleListByUserIdFromCache(Long userId) {
+        // 获得用户拥有的角色编号
+        Set<Long> roleIds = getSelf().getUserRoleIdListByUserIdFromCache(userId);
+        // 获得角色数组，并移除被禁用的
+        List<RoleDO> roles = roleService.getRoleListFromCache(roleIds);
+        roles.removeIf(role -> !CommonStatusEnum.ENABLE.getStatus().equals(role.getStatus()));
+        return roles;
+    }
 
     // ========== 用户-部门的相关方法  ==========
     /**

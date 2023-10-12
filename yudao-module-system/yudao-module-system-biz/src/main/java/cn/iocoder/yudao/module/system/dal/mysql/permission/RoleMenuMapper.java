@@ -10,12 +10,17 @@ import java.util.List;
 
 @Mapper
 public interface RoleMenuMapper extends BaseMapperX<RoleMenuDO> {
+
     default List<RoleMenuDO> selectListByRoleId(Long roleId) {
         return selectList(RoleMenuDO::getRoleId, roleId);
     }
 
     default List<RoleMenuDO> selectListByRoleId(Collection<Long> roleIds) {
         return selectList(RoleMenuDO::getRoleId, roleIds);
+    }
+
+    default List<RoleMenuDO> selectListByMenuId(Long menuId) {
+        return selectList(RoleMenuDO::getMenuId, menuId);
     }
 
     default void deleteListByRoleIdAndMenuIds(Long roleId, Collection<Long> menuIds) {

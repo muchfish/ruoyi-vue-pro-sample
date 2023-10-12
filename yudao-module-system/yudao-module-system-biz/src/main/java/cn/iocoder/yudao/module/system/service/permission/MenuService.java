@@ -61,6 +61,13 @@ public interface MenuService {
      */
     List<MenuDO> getMenuList(MenuListReqVO reqVO);
 
+    /**
+     * 获得权限对应的菜单编号数组
+     *
+     * @param permission 权限标识
+     * @return 数组
+     */
+    List<Long> getMenuIdListByPermissionFromCache(String permission);
 
     /**
      * 获得菜单
@@ -70,7 +77,6 @@ public interface MenuService {
      */
     MenuDO getMenu(Long id);
 
-
     /**
      * 获得菜单数组
      *
@@ -78,4 +84,5 @@ public interface MenuService {
      * @return 菜单数组
      */
     List<MenuDO> getMenuList(Collection<Long> ids);
+
 }
