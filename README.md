@@ -806,3 +806,11 @@
       ```
 
 2. [yudao-module-system-biz]：应用`@PreAuthorize`完成接口权限控制
+
+   - ```java
+     @PreAuthorize("@ss.hasPermission('system:dept:query')")
+     ```
+
+
+
+#### 
