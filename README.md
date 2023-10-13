@@ -818,3 +818,15 @@
    ![](.image/ruoyi-vue-pro-通知公告.png)
 
    
+
+#### 审计日志-操作日志
+
+1. [AdminAuthServiceImpl.java](..\ruoyi-vue-pro-sample\yudao-module-system\yudao-module-system-biz\src\main\java\cn\iocoder\yudao\module\system\service\auth\AdminAuthServiceImpl.java) ：登录登出时记录日志
+
+2. [LoginLogController.java](..\ruoyi-vue-pro-sample\yudao-module-system\yudao-module-system-biz\src\main\java\cn\iocoder\yudao\module\system\controller\admin\logger\LoginLogController.java) ：登录日志查询
+
+3. 登录日志数据库模型
+   ![](.image/ruoyi-vue-pro-审计日志-登录日志.png)
+   - 用户类型
+   - 登录日志类型
+   - 登录结果

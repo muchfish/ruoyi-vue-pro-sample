@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.security.core;
 
 import cn.hutool.core.map.MapUtil;
+import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -19,6 +20,12 @@ public class LoginUser {
      * 用户编号
      */
     private Long id;
+    /**
+     * 用户类型
+     *
+     * 关联 {@link UserTypeEnum}
+     */
+    private Integer userType;
     /**
      * 租户编号
      */

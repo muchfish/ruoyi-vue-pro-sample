@@ -27,7 +27,7 @@ public class ServletUtils {
      * 返回 JSON 字符串
      *
      * @param response 响应
-     * @param object   对象，会序列化成 JSON 字符串
+     * @param object 对象，会序列化成 JSON 字符串
      */
     @SuppressWarnings("deprecation") // 必须使用 APPLICATION_JSON_UTF8_VALUE，否则会乱码
     public static void writeJSON(HttpServletResponse response, Object object) {
@@ -36,5 +36,42 @@ public class ServletUtils {
     }
 
 
-}
+    /**
+     * @param request 请求
+     * @return ua
+     */
+    public static String getUserAgent(HttpServletRequest request) {
+        String ua = request.getHeader("User-Agent");
+        return ua != null ? ua : "";
+    }
 
+    /**
+     * 获得请求
+     *
+     * @return HttpServletRequest
+     */
+    public static HttpServletRequest getRequest() {
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (!(requestAttributes instanceof ServletRequestAttributes)) {
+            return null;
+        }
+        return ((ServletRequestAttributes) requestAttributes).getRequest();
+    }
+
+    public static String getUserAgent() {
+        HttpServletRequest request = getRequest();
+        if (request == null) {
+            return null;
+        }
+        return getUserAgent(request);
+    }
+
+    public static String getClientIP() {
+        HttpServletRequest request = getRequest();
+        if (request == null) {
+            return null;
+        }
+        return ServletUtil.getClientIP(request);
+    }
+
+}
