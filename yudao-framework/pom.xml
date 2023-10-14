@@ -22,6 +22,8 @@
         <module>yudao-spring-boot-starter-biz-operatelog</module>
         <module>yudao-spring-boot-starter-biz-dict</module>
         <module>yudao-spring-boot-starter-biz-tenant</module>
+        <module>yudao-spring-boot-starter-biz-error-code</module>
+
         <module>yudao-spring-boot-starter-captcha</module>
     </modules>
     <artifactId>yudao-framework</artifactId>

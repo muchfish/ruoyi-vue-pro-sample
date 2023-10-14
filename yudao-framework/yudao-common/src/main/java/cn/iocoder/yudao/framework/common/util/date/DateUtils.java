@@ -1,6 +1,10 @@
 package cn.iocoder.yudao.framework.common.util.date;
 
-import java.time.LocalDateTime;
+import cn.hutool.core.date.LocalDateTimeUtil;
+
+import java.time.*;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * 时间工具类
@@ -15,4 +19,16 @@ public class DateUtils {
         LocalDateTime now = LocalDateTime.now();
         return now.isAfter(time);
     }
+
+    public static LocalDateTime max(LocalDateTime a, LocalDateTime b) {
+        if (a == null) {
+            return b;
+        }
+        if (b == null) {
+            return a;
+        }
+        return a.isAfter(b) ? a : b;
+    }
+
+
 }

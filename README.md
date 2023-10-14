@@ -892,6 +892,36 @@
    ![](.image/ruoyi-vue-pro-站内信管理.png)
 
 
+#### 错误码管理
+1. 错误码管理数据库模型
+
+   ![](.image/ruoyi-vue-pro-错误码管理.png)
+2. 错误码管理CRUD（数据库操作）：[ErrorCodeController.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fcontroller%2Fadmin%2Ferrorcode%2FErrorCodeController.java)
+   - 此处的C和U操作后，错误码类型会转为2-手动编辑
+   - 错误码类型：1-自动生成（从本地错误码常量接口中解析生成） 2-手动编辑
+3. 错误码自动更新和本地错误码自动写入： [yudao-spring-boot-starter-biz-error-code](yudao-framework%2Fyudao-spring-boot-starter-biz-error-code)
+   1. 自动更新：[ErrorCodeLoaderImpl.java](yudao-framework%2Fyudao-spring-boot-starter-biz-error-code%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ferrorcode%2Fcore%2Floader%2FErrorCodeLoaderImpl.java)
+      1. 将数据库中的错误码（主要针对`本地错误码自动写入`和`错误码管理CU操作`），更新到应用服务器缓存中(`ServiceExceptionUtil#MESSAGES`)，实现异常提示信息自动更新
+      2. 初始全量更新，后续增量更新
+      - `maxUpdateTime`：缓存错误码的最大更新时间，用于后续的增量轮询，判断是否有更新
+      - `@EventListener(ApplicationReadyEvent.class)`：应用程序启动完成后执行自动更新
+      - `@Scheduled(fixedDelay = REFRESH_ERROR_CODE_PERIOD, initialDelay = REFRESH_ERROR_CODE_PERIOD)`
+         - `initialDelay`：首次执行任务的延迟时间，单位毫秒
+         - `fixedDelay`：任务执行的固定延迟时间，单位毫秒
+   2. 本地错误码自动写入：[ErrorCodeAutoGeneratorImpl.java](yudao-framework%2Fyudao-spring-boot-starter-biz-error-code%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ferrorcode%2Fcore%2Fgenerator%2FErrorCodeAutoGeneratorImpl.java)
+      1. 解析`yudao.error-code.constants-class-list`指定的本地错误码常量接口
+      2. insertOrUpdate进数据库
+         > 更新有三个前置条件
+         > 1. 只更新自动生成的错误码，即 Type 为 ErrorCodeTypeEnum.AUTO_GENERATION
+         > 2. 分组 applicationName 必须匹配，避免存在错误码冲突的情况
+         > 3. 错误提示语存在差异
+
+
+> 业务异常为什么不直接return CommonResult
+>   因为 Spring @Transactional 声明式事务，是基于异常进行回滚的，如果使用 CommonResult 返回，则事务回滚会非常麻烦
+
+
+
 
 
 
