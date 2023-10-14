@@ -3,13 +3,14 @@ package cn.iocoder.yudao.module.system.controller.admin.dict;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
+import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.*;
 import cn.iocoder.yudao.module.system.convert.dict.DictTypeConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictTypeDO;
 import cn.iocoder.yudao.module.system.service.dict.DictTypeService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum.EXPORT;
 
 @Tag(name = "管理后台 - 字典类型")
 @RestController
@@ -82,6 +84,7 @@ public class DictTypeController {
     @Operation(summary = "导出数据类型")
     @GetMapping("/export")
     @PreAuthorize("@ss.hasPermission('system:dict:query')")
+    @OperateLog(type = EXPORT)
     public void export(HttpServletResponse response, @Valid DictTypeExportReqVO reqVO) throws IOException {
         List<DictTypeDO> list = dictTypeService.getDictTypeList(reqVO);
         List<DictTypeExcelVO> data = DictTypeConvert.INSTANCE.convertList02(list);

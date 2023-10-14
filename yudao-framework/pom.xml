@@ -18,6 +18,8 @@
         <module>yudao-spring-boot-starter-web</module>
         <module>yudao-spring-boot-starter-security</module>
         <module>yudao-spring-boot-starter-excel</module>
+
+        <module>yudao-spring-boot-starter-biz-operatelog</module>
         <module>yudao-spring-boot-starter-biz-dict</module>
         <module>yudao-spring-boot-starter-biz-tenant</module>
         <module>yudao-spring-boot-starter-captcha</module>

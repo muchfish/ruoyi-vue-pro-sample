@@ -4,13 +4,14 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
+import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.*;
 import cn.iocoder.yudao.module.system.convert.permission.RoleConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum.EXPORT;
 import static java.util.Collections.singleton;
 
 @Tag(name = "管理后台 - 角色")
@@ -92,6 +94,7 @@ public class RoleController {
     }
 
     @GetMapping("/export")
+    @OperateLog(type = EXPORT)
     @PreAuthorize("@ss.hasPermission('system:role:export')")
     public void export(HttpServletResponse response, @Validated RoleExportReqVO reqVO) throws IOException {
         List<RoleDO> list = roleService.getRoleList(reqVO);

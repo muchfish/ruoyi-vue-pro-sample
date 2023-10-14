@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.security.core.util;
 
 import cn.iocoder.yudao.framework.security.core.LoginUser;
+import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -91,6 +92,10 @@ public class SecurityFrameworkUtils {
         Authentication authentication = buildAuthentication(loginUser, request);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        // 额外设置到 request 中，用于 ApiAccessLogFilter 可以获取到用户编号；
+        // 原因是，Spring Security 的 Filter 在 ApiAccessLogFilter 后面，在它记录访问日志时，线上上下文已经没有用户编号等信息
+        WebFrameworkUtils.setLoginUserId(request, loginUser.getId());
+        WebFrameworkUtils.setLoginUserType(request, loginUser.getUserType());
     }
 
     private static Authentication buildAuthentication(LoginUser loginUser, HttpServletRequest request) {

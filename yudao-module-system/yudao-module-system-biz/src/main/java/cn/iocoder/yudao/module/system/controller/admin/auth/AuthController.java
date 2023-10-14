@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.controller.admin.auth;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.framework.security.config.SecurityProperties;
 import cn.iocoder.yudao.framework.security.core.annotation.LoginFree;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
@@ -62,6 +63,7 @@ public class AuthController {
     @PostMapping("/login")
     @LoginFree
     @Operation(summary = "使用账号密码登录")
+    @OperateLog(enable = false) // 避免 Post 请求被记录操作日志
     public CommonResult<AuthLoginRespVO> login(@RequestBody @Valid AuthLoginReqVO reqVO) {
         return success(authService.login(reqVO));
     }
@@ -69,6 +71,7 @@ public class AuthController {
     @PostMapping("/logout")
     @LoginFree
     @Operation(summary = "登出系统")
+    @OperateLog(enable = false) // 避免 Post 请求被记录操作日志
     public CommonResult<Boolean> logout(HttpServletRequest request) {
         String token = obtainAuthorization(request, securityProperties.getTokenHeader());
         if (StrUtil.isNotBlank(token)) {

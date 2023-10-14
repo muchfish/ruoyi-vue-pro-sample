@@ -3,24 +3,26 @@ package cn.iocoder.yudao.module.system.controller.admin.tenant;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
-import cn.iocoder.yudao.framework.security.core.annotation.LoginFree;
+import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.*;
 import cn.iocoder.yudao.module.system.convert.tenant.TenantConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.annotation.security.PermitAll;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum.EXPORT;
 
 @Tag(name = "管理后台 - 租户")
 @RestController
@@ -31,9 +33,9 @@ public class TenantController {
     private TenantService tenantService;
 
     @GetMapping("/get-id-by-name")
+    @PermitAll
     @Operation(summary = "使用租户名，获得租户编号", description = "登录界面，根据用户的租户名，获得租户编号")
     @Parameter(name = "name", description = "租户名", required = true, example = "1024")
-    @LoginFree
     public CommonResult<Long> getTenantIdByName(@RequestParam("name") String name) {
         TenantDO tenantDO = tenantService.getTenantByName(name);
         return success(tenantDO != null ? tenantDO.getId() : null);
@@ -83,6 +85,7 @@ public class TenantController {
     @GetMapping("/export-excel")
     @Operation(summary = "导出租户 Excel")
     @PreAuthorize("@ss.hasPermission('system:tenant:export')")
+    @OperateLog(type = EXPORT)
     public void exportTenantExcel(@Valid TenantExportReqVO exportReqVO,
                                   HttpServletResponse response) throws IOException {
         List<TenantDO> list = tenantService.getTenantList(exportReqVO);

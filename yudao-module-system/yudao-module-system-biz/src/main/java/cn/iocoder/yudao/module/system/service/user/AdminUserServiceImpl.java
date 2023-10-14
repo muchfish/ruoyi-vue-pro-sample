@@ -178,6 +178,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         return userMapper.selectList(reqVO, getDeptCondition(reqVO.getDeptId()));
     }
 
+    @Override
+    public List<AdminUserDO> getUserListByNickname(String nickname) {
+        return userMapper.selectListByNickname(nickname);
+    }
+
     /**
      * 获得部门查询条件：查询指定部门的子部门编号们，包括自身
      * @param deptId 部门编号

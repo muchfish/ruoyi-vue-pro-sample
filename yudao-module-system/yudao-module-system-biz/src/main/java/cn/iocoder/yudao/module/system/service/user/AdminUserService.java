@@ -121,6 +121,13 @@ public interface AdminUserService {
      */
     List<AdminUserDO> getUserList(UserExportReqVO reqVO);
 
+    /**
+     * 获得用户列表，基于昵称模糊匹配
+     *
+     * @param nickname 昵称
+     * @return 用户列表
+     */
+    List<AdminUserDO> getUserListByNickname(String nickname);
 
     /**
      * 批量导入用户

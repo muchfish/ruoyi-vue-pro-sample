@@ -702,7 +702,7 @@
          ```
          - `registrationBean.setOrder(WebFilterOrderEnum.TENANT_SECURITY_FILTER);`：保证在 Spring Security 过滤器后面
 
-   4. [TenantUtils.java](yudao-framework\yudao-spring-boot-starter-biz-tenant\src\main\java\cn\iocoder\yudao\framework\tenant\core\util\TenantUtils.java) ：多租户 Util
+   4. [TenantUtils.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Futil%2FTenantUtils.java) ：多租户 Util
       - `execute(Long tenantId, Runnable runnable)`：使用指定租户，执行对应的逻辑。让业务代码和租户获取、切换的逻辑解耦
 
 2. [yudao-common]
@@ -756,7 +756,7 @@
 #### 接入数据字典组件和excel组件
 
 1. [yudao-spring-boot-starter-biz-dict](yudao-framework%2Fyudao-spring-boot-starter-biz-dict)：数据字典组件。主要作用为通过将字典缓存在内存中，保证性能
-   1. [DictFrameworkUtils.java](yudao-framework\yudao-spring-boot-starter-biz-dict\src\main\java\cn\iocoder\yudao\framework\dict\core\util\DictFrameworkUtils.java) ：数据字典工具类
+   1. [DictFrameworkUtils.java](yudao-framework%2Fyudao-spring-boot-starter-biz-dict%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fdict%2Fcore%2Futil%2FDictFrameworkUtils.java) ：数据字典工具类
       1. 缓存数据。K：字典类型-字典值，V：字典标签
       2. 缓存数据K。：字典类型-字典标签，V：字典值
       3. ` String getDictDataLabel(String dictType, String value)`：通过`字典类型-字典值`获取`字典标签`
@@ -764,18 +764,18 @@
       5. `DictDataApi`：`yudao-module-system-biz`模块提供的从数据中通过`字典类型-字典值`获取`字典标签`和解析`字典类型-字典标签`获取到`字典值`的Api
       6. `@SneakyThrows`：在方法上使用`@SneakyThrows`，以指示方法可能会抛出受检异常，而无需显式地捕获或声明这些异常。Lombok 在编译时会生成必要的异常处理代码，从而减少了代码的复杂性。
 2. [yudao-spring-boot-starter-excel](yudao-framework%2Fyudao-spring-boot-starter-excel)：excel组件。基于 EasyExcel 实现 Excel 相关的操作
-   1.  [ExcelUtils.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\util\ExcelUtils.java) ：Excel 工具类，提供excel的读写功能
+   1.  [ExcelUtils.java](yudao-framework%2Fyudao-spring-boot-starter-excel%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fexcel%2Fcore%2Futil%2FExcelUtils.java) ：Excel 工具类，提供excel的读写功能
        - 提供excel文件读写功能
        - `autoCloseStream(false)`：禁用EasyExcel默认的自动流关闭功能，交给 Servlet 自己处理，Servlet容器通常会在一个请求结束后自动关闭响应流。
        - `Class<T> head`：会配合head类字段上的`@ExcelProperty`，自动生成excel的列头
-   2.  [DictConvert.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\convert\DictConvert.java) ：Excel 数据字典转换器。用于java和excel之间字典数据的互相转换
+   2.  [DictConvert.java](yudao-framework%2Fyudao-spring-boot-starter-excel%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fexcel%2Fcore%2Fconvert%2FDictConvert.java) ：Excel 数据字典转换器。用于java和excel之间字典数据的互相转换
        - `Converter`： EasyExcel中用于执行Excel数据和Java对象之间的相互转换的接口
        - `Converter<Object>`：作用于Object类型的字段的转换
        - `convertToJavaData(...)`：将 Excel 对象转换为 Java 对象
        - `convertToExcelData(...)`：将 Java 对象转换为 Excel 对象
        - 使用`DictFrameworkUtils`类完成，`字典值`与`字典标签`的转换
-       - [DictFormat.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\annotations\DictFormat.java) ：用于标注字段的字典类型，辅助`DictConvert`完成`字典值`与`字典标签`的转换
-   3.   [JsonConvert.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\convert\JsonConvert.java) 与 [MoneyConvert.java](yudao-framework\yudao-spring-boot-starter-excel\src\main\java\cn\iocoder\yudao\framework\excel\core\convert\MoneyConvert.java) ：同`DictConvert`
+       - [DictFormat.java](yudao-framework%2Fyudao-spring-boot-starter-excel%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fexcel%2Fcore%2Fannotations%2FDictFormat.java) ：用于标注字段的字典类型，辅助`DictConvert`完成`字典值`与`字典标签`的转换
+   3.   [JsonConvert.java](yudao-framework%2Fyudao-spring-boot-starter-excel%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fexcel%2Fcore%2Fconvert%2FJsonConvert.java) 与 [MoneyConvert.java](yudao-framework%2Fyudao-spring-boot-starter-excel%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fexcel%2Fcore%2Fconvert%2FMoneyConvert.java) ：同`DictConvert`
 3. [yudao-module-system-biz]中的excel导入导出
    1. 【租户管理】excel导出
    2. 【用户管理】导出用户、导入用户模板下载、导入用户
@@ -794,7 +794,7 @@
       - `prePostEnabled = true`：用于启用方法级别的安全控制中的 `@PreAuthorize` 和 `@PostAuthorize` 注解
       -  `@PreAuthorize`：用于在方法执行前进行权限验证。它允许你定义方法级别的安全控制规则，只有当规则中指定的条件满足时(EL表达式结果为true时)，方法才能被执行。
 
-   2. [SecurityFrameworkService.java](yudao-framework\yudao-spring-boot-starter-security\src\main\java\cn\iocoder\yudao\framework\security\core\service\SecurityFrameworkService.java)：定义权限相关的校验操作。用于`@PreAuthorize`的EL表达式中使用
+   2. [SecurityFrameworkService.java](yudao-framework%2Fyudao-spring-boot-starter-security%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fsecurity%2Fcore%2Fservice%2FSecurityFrameworkService.java)：定义权限相关的校验操作。用于`@PreAuthorize`的EL表达式中使用
 
    3. 配置`SecurityFrameworkService`的bean，取别名`ss`简化引用
 
@@ -819,14 +819,47 @@
 
    
 
-#### 审计日志-操作日志
+#### 审计日志-登录日志
 
-1. [AdminAuthServiceImpl.java](..\ruoyi-vue-pro-sample\yudao-module-system\yudao-module-system-biz\src\main\java\cn\iocoder\yudao\module\system\service\auth\AdminAuthServiceImpl.java) ：登录登出时记录日志
+1. [AdminAuthServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fauth%2FAdminAuthServiceImpl.java)：登录登出时记录日志
 
-2. [LoginLogController.java](..\ruoyi-vue-pro-sample\yudao-module-system\yudao-module-system-biz\src\main\java\cn\iocoder\yudao\module\system\controller\admin\logger\LoginLogController.java) ：登录日志查询
+2. [LoginLogController.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fcontroller%2Fadmin%2Flogger%2FLoginLogController.java)：登录日志查询
 
 3. 登录日志数据库模型
    ![](.image/ruoyi-vue-pro-审计日志-登录日志.png)
    - 用户类型
    - 登录日志类型
    - 登录结果
+
+#### 审计日志-操作日志
+
+1. [yudao-spring-boot-starter-biz-operatelog](yudao-framework%2Fyudao-spring-boot-starter-biz-operatelog)：操作日志组件。基于AOP实现
+
+   1. [OperateLogAspect.java](yudao-framework%2Fyudao-spring-boot-starter-biz-operatelog%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Foperatelog%2Fcore%2Faop%2FOperateLogAspect.java) ：日志切面
+
+      1. 日志记录条件(满足如下任一条件，则会进行记录)
+
+         1. 使用 @Operation + 非 @GetMapping的接口
+
+         2. 使用 @OperateLog 注解
+
+            > 但是，如果声明 @OperateLog 注解时，将 enable 属性设置为 false 时，强制不记录。
+
+      2. 异步记入日志
+
+      3. 拓展：拓展明细和拓展字段
+   
+         1. [OperateLogUtils.java](yudao-framework%2Fyudao-spring-boot-starter-biz-operatelog%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Foperatelog%2Fcore%2Futil%2FOperateLogUtils.java)：记录操作明细和拓展字段的工具类
+
+   2. [OperateLog.java](yudao-framework%2Fyudao-spring-boot-starter-biz-operatelog%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Foperatelog%2Fcore%2Fannotations%2FOperateLog.java) 
+
+      1. `module` 属性：操作模块，例如说：用户、岗位、部门等等。为空时，默认会读取类上的 Swagger `@Tag` 注解的 `name` 属性。
+      2. `name` 属性：操作名，例如说：新增用户、修改用户等等。为空时，默认会读取方法的 Swagger `@Operation` 注解的 `summary` 属性。
+      3. `type` 属性：操作类型，在 [OperateTypeEnum.java](yudao-framework%2Fyudao-spring-boot-starter-biz-operatelog%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Foperatelog%2Fcore%2Fenums%2FOperateTypeEnum.java) 枚举。目前有 `GET` 查询、`CREATE` 新增、`UPDATE` 修改、`DELETE` 删除、`EXPORT` 导出、`IMPORT` 导入、`OTHER` 其它，可进行自定义
+   
+   3. 操作日志记录内容
+   
+      ![](.image/ruoyi-vue-pro-审计日志-操作日志.png)
+
+
+

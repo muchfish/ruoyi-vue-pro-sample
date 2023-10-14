@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.web.config;
 
 import cn.iocoder.yudao.framework.common.enums.WebFilterOrderEnum;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
+import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -39,6 +40,13 @@ public class YudaoWebAutoConfiguration implements WebMvcConfigurer {
         AntPathMatcher antPathMatcher = new AntPathMatcher(".");
         configurer.addPathPrefix(api.getPrefix(), clazz -> clazz.isAnnotationPresent(RestController.class)
                 && antPathMatcher.match(api.getController(), clazz.getPackage().getName())); // 仅仅匹配 controller 包
+    }
+
+    @Bean
+    @SuppressWarnings("InstantiationOfUtilityClass")
+    public WebFrameworkUtils webFrameworkUtils(WebProperties webProperties) {
+        // 由于 WebFrameworkUtils 需要使用到 webProperties 属性，所以注册为一个 Bean
+        return new WebFrameworkUtils(webProperties);
     }
 
     @Bean

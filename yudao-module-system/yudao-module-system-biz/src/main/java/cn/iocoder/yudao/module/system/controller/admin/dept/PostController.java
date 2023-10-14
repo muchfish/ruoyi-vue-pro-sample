@@ -4,13 +4,14 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
+import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.*;
 import cn.iocoder.yudao.module.system.convert.dept.PostConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
 import cn.iocoder.yudao.module.system.service.dept.PostService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum.EXPORT;
 
 @Tag(name = "管理后台 - 岗位")
 @RestController
@@ -86,6 +88,7 @@ public class PostController {
     @GetMapping("/export")
     @Operation(summary = "岗位管理")
     @PreAuthorize("@ss.hasPermission('system:post:export')")
+    @OperateLog(type = EXPORT)
     public void export(HttpServletResponse response, @Validated PostExportReqVO reqVO) throws IOException {
         List<PostDO> posts = postService.getPostList(reqVO);
         List<PostExcelVO> data = PostConvert.INSTANCE.convertList03(posts);

@@ -73,5 +73,8 @@ public class ServletUtils {
         }
         return ServletUtil.getClientIP(request);
     }
+    public static String getClientIP(HttpServletRequest request) {
+        return ServletUtil.getClientIP(request);
+    }
 
 }
