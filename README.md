@@ -862,4 +862,38 @@
       ![](.image/ruoyi-vue-pro-审计日志-操作日志.png)
 
 
+#### 站内信管理
+1. 站内信模板
+   1. 模板内容：使用 {var} 作为占位符，例如说 {name}、{code} 等
+   2. 解析模板内容占位符名称
+      - `ReUtil.findAllGroup1(Pattern pattern, CharSequence content)`：返回与正则表达式模式匹配的文本内容,只返回正则表达式中的第一个分组且只包含占位符部分。（hutool提供）
+      - `ReUtil.findAllGroup0(Pattern pattern, CharSequence content)`：返回所有与正则表达式模式匹配的文本内容。（hutool提供）
+      ```java
+      String content = "Date: 2023-10-14, Time: 12:30 PM";
+      Pattern pattern = Pattern.compile("Date: (\\d{4}-\\d{2}-\\d{2}), Time: (\\d{2}:\\d{2} [APM]{2})");
+      
+      List<String> allMatches0 = ReUtil.findAllGroup0(pattern, content);
+      List<String> allMatches1 = ReUtil.findAllGroup1(pattern, content);
+      
+      // allMatches0 包含完整的匹配项，包括所有分组内容
+      // ["Date: 2023-10-14, Time: 12:30 PM", "2023-10-14", "12:30 PM"]
+      
+      // allMatches1 只包含第一个分组的匹配内容
+      // ["2023-10-14"]
+      
+      ```
+   3. 填充模板内容
+      - `String StrUtil.format(CharSequence template, Map<?, ?> map)`：（hutool提供，使用这个）
+        - 将`这是模板内容{name}、{code}`转换为`这是模板内容张三、编码`。其中map的key为name和code，对应值会填充在模板内容当中
+2. 站内信
+   - 是否已读
+3. 站内信管理数据库模型
+
+   ![](.image/ruoyi-vue-pro-站内信管理.png)
+
+
+
+
+
+
 
