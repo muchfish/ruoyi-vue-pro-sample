@@ -14,7 +14,7 @@
     <url>https://github.com/YunaiV/ruoyi-vue-pro</url>
 
     <properties>
-        <revision>1.8.1-snapshot</revision>
+        <revision>1.8.2-snapshot</revision>
         <!-- 统一依赖管理 -->
         <spring.boot.version>2.7.15</spring.boot.version>
         <!-- Web 相关 -->
@@ -33,6 +33,7 @@
         <easyexcel.verion>3.3.2</easyexcel.verion>
         <guava.version>32.0.1-jre</guava.version>
         <transmittable-thread-local.version>2.14.2</transmittable-thread-local.version>
+        <ip2region.version>2.7.0</ip2region.version>
     </properties>
 
 
@@ -71,6 +72,11 @@
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>
                 <artifactId>yudao-spring-boot-starter-biz-error-code</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.iocoder.boot</groupId>
+                <artifactId>yudao-spring-boot-starter-biz-ip</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -196,6 +202,13 @@
                 <groupId>com.xingyuv</groupId>
                 <artifactId>spring-boot-starter-captcha-plus</artifactId>
                 <version>${captcha-plus.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.lionsoul</groupId>
+                <artifactId>ip2region</artifactId>
+                <version>${ip2region.version}</version>
             </dependency>
 
         </dependencies>

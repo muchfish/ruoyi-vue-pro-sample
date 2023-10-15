@@ -920,8 +920,8 @@
 
 > 业务异常为什么不直接return CommonResult
 >   因为 Spring @Transactional 声明式事务，是基于异常进行回滚的，如果使用 CommonResult 返回，则事务回滚会非常麻烦
- 
- 
+
+
 #### 敏感词管理
 1. 敏感词数据库模型
    
@@ -945,6 +945,61 @@
    - `Map<String, SimpleTrie> tagSensitiveWordTries`：按标签分组的敏感词树。用于按标签校验敏感词的场景
    - `initLocalCache()`：敏感词缓存初始化。cud时需调用
    - `refreshLocalCache()`：敏感词缓存定时更新。增量更新。
+
+#### 地区管理
+1. IP 功能：查询 IP 对应的城市信息。
+   1. [IPUtils.java](yudao-framework%2Fyudao-spring-boot-starter-biz-ip%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fip%2Fcore%2Futils%2FIPUtils.java)
+      1. 基于`ip2region`。离线IP地址定位库。
+      2. 使用饿汉静态单例，构造函数中加载IP库。实现了类初始加载时加载IP库
+2. 城市功能：查询城市编码对应的城市信息。
+   1. [AreaUtils.java](yudao-framework%2Fyudao-spring-boot-starter-biz-ip%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fip%2Fcore%2Futils%2FAreaUtils.java)
+      1. 使用饿汉静态单例，构造函数中加载地址库。实现了类初始加载时加载地址库
+      2. 构建区域父子关系对象时使用两遍for循环实现
+3. 结合1和2，实现通过ip查地址
+4. 解决mapstruct项目编译时报错
+
+> [yudao-module-system-biz]中引入[yudao-spring-boot-starter-biz-ip]，项目编译时所有mapstruct会报错
+>
+> ```
+> No target bean properties found: can't map Collection element "TenantPackageDO tenantPackageDO" to "TenantPackageSimpleRespVO tenantPackageSimpleRespVO". Consider to declare/implement a mapping method: "TenantPackageSimpleRespVO map(TenantPackageDO value)".
+> ```
+>
+> 通过在最外层pom中增加插件解决
+>
+> ```xml
+> <build>
+>         <pluginManagement>
+>             <plugins>
+>                 <!-- maven-compiler-plugin 插件，解决 spring-boot-configuration-processor + Lombok + MapStruct 组合 -->
+>                 <!-- https://stackoverflow.com/questions/33483697/re-run-spring-boot-configuration-annotation-processor-to-update-generated-metada -->
+>                 <plugin>
+>                     <groupId>org.apache.maven.plugins</groupId>
+>                     <artifactId>maven-compiler-plugin</artifactId>
+>                     <version>${maven-compiler-plugin.version}</version>
+>                     <configuration>
+>                         <annotationProcessorPaths>
+>                             <path>
+>                                 <groupId>org.springframework.boot</groupId>
+>                                 <artifactId>spring-boot-configuration-processor</artifactId>
+>                                 <version>${spring.boot.version}</version>
+>                             </path>
+>                             <path>
+>                                 <groupId>org.projectlombok</groupId>
+>                                 <artifactId>lombok</artifactId>
+>                                 <version>${lombok.version}</version>
+>                             </path>
+>                             <path>
+>                                 <groupId>org.mapstruct</groupId>
+>                                 <artifactId>mapstruct-processor</artifactId>
+>                                 <version>${mapstruct.version}</version>
+>                             </path>
+>                         </annotationProcessorPaths>
+>                     </configuration>
+>                 </plugin>
+>             </plugins>
+>         </pluginManagement>
+>     </build>
+> ```
 
 
 
