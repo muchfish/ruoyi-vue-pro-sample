@@ -1,13 +1,14 @@
 package cn.iocoder.yudao.framework.common.util.collection;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ArrayUtil;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static java.util.Arrays.asList;
 
 /**
  * Collection 工具类
@@ -23,11 +24,25 @@ public class CollectionUtils {
         }
         return from.stream().filter(predicate).collect(Collectors.toList());
     }
+    public static <T, U> List<U> convertList(T[] from, Function<T, U> func) {
+        if (ArrayUtil.isEmpty(from)) {
+            return new ArrayList<>();
+        }
+        return convertList(Arrays.asList(from), func);
+    }
+
     public static <T, U> List<U> convertList(Collection<T> from, Function<T, U> func) {
         if (CollUtil.isEmpty(from)) {
             return new ArrayList<>();
         }
         return from.stream().map(func).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    public static <T, U> List<U> convertList(Collection<T> from, Function<T, U> func, Predicate<T> filter) {
+        if (CollUtil.isEmpty(from)) {
+            return new ArrayList<>();
+        }
+        return from.stream().filter(filter).map(func).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public static <T, U> Set<U> convertSet(Collection<T> from, Function<T, U> func) {
@@ -85,7 +100,14 @@ public class CollectionUtils {
         }
         return from.stream().collect(Collectors.toMap(keyFunc, valueFunc, mergeFunction, supplier));
     }
-
+    public static <T, V extends Comparable<? super V>> V getMaxValue(Collection<T> from, Function<T, V> valueFunc) {
+        if (CollUtil.isEmpty(from)) {
+            return null;
+        }
+        assert !from.isEmpty(); // 断言，避免告警
+        T t = from.stream().max(Comparator.comparing(valueFunc)).get();
+        return valueFunc.apply(t);
+    }
 
     public static <T> Collection<T> singleton(T deptId) {
         return deptId == null ? Collections.emptyList() : Collections.singleton(deptId);

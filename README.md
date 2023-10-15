@@ -910,6 +910,7 @@
          - `fixedDelay`：任务执行的固定延迟时间，单位毫秒
    2. 本地错误码自动写入：[ErrorCodeAutoGeneratorImpl.java](yudao-framework%2Fyudao-spring-boot-starter-biz-error-code%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ferrorcode%2Fcore%2Fgenerator%2FErrorCodeAutoGeneratorImpl.java)
       1. 解析`yudao.error-code.constants-class-list`指定的本地错误码常量接口
+         - `ClassUtil.loadClass(String className)`：加载类并初始化（hutool提供）
       2. insertOrUpdate进数据库
          > 更新有三个前置条件
          > 1. 只更新自动生成的错误码，即 Type 为 ErrorCodeTypeEnum.AUTO_GENERATION
@@ -919,7 +920,31 @@
 
 > 业务异常为什么不直接return CommonResult
 >   因为 Spring @Transactional 声明式事务，是基于异常进行回滚的，如果使用 CommonResult 返回，则事务回滚会非常麻烦
-
+ 
+ 
+#### 敏感词管理
+1. 敏感词数据库模型
+   
+   ![](.image/ruoyi-vue-pro-敏感词管理.png)
+   - tags：标签数组。标签即场景，可按不同场景校验敏感词
+2. 敏感词实现原理-前缀树算法：[SimpleTrie.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Futil%2Fcollection%2FSimpleTrie.java)
+   ![前缀树](.image/Trie_example.png)
+   - `敏感词的前缀树`：节点只存单个字符（即前缀），从根节点—>子子孙孙节点组成完整字符串
+   - `根节点`：为空字符串（可无）
+   - `children`：整棵前缀树。本例为`HashMap<String,V>`结构。`V`为子节点，无根节点。`V`的类型仍然为`HashMap<String,V>`。无限累加下去构成敏感词树.
+   - 成员变量`Character CHARACTER_END = '\0';`：标记敏感词的终止（放在一个子节点链路的末尾）。
+     > 用成员变量`CHARACTER_END`来标记敏感词的终止的目的：
+       从HashMap中get key结果为null，不能判断该key不存在，还是该key存在但值为null。因此使用`CHARACTER_END`来代替敏感词的终止
+       即从`children`中get字符的结果为null，代表该字符非敏感词，为`CHARACTER_END`，则代表该字符为敏感词，且是敏感词的终止标记。
+   - `public SimpleTrie(Collection<String> strs)`：构建敏感词树
+     - `短敏感词在前`：构建敏感词树时，将原敏感词列表按字符串长度升序排，使短字符串敏感词在前，后再构建树。这样包含相同前缀敏感词的较长敏感词无需存入树种。
+   - `boolean isValid(String text) `：验证文本是否合法，即不包含敏感词。true-合法 false-不合法
+   - `recursion(...)`：验证文本从指定位置开始，是否不包含某个敏感词
+3. 敏感词CRUD和校验、缓存：[SensitiveWordServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fsensitiveword%2FSensitiveWordServiceImpl.java)
+   - `volatile SimpleTrie defaultSensitiveWordTrie`：默认的敏感词的字典树缓存，包含所有敏感词。校验敏感词忽略标签时使用。`volatile`保证多线程可见（没有体现出价值）。
+   - `Map<String, SimpleTrie> tagSensitiveWordTries`：按标签分组的敏感词树。用于按标签校验敏感词的场景
+   - `initLocalCache()`：敏感词缓存初始化。cud时需调用
+   - `refreshLocalCache()`：敏感词缓存定时更新。增量更新。
 
 
 
