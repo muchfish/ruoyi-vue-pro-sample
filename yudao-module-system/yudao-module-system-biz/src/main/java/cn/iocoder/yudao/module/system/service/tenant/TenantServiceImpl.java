@@ -26,6 +26,7 @@ import cn.iocoder.yudao.module.system.enums.permission.RoleTypeEnum;
 import cn.iocoder.yudao.module.system.service.permission.MenuService;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
+import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
@@ -236,6 +237,18 @@ public class TenantServiceImpl implements TenantService {
     @Override
     public List<TenantDO> getTenantListByPackageId(Long packageId) {
         return tenantMapper.selectListByPackageId(packageId);
+    }
+
+    @Override
+    public void handleTenantInfo(TenantInfoHandler handler) {
+        // 如果禁用，则不执行逻辑
+        if (isTenantDisable()) {
+            return;
+        }
+        // 获得租户
+        TenantDO tenant = getTenant(TenantContextHolder.getRequiredTenantId());
+        // 执行处理器
+        handler.handle(tenant);
     }
 
     @Override

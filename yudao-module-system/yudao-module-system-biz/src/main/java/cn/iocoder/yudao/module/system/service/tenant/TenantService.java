@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantEx
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantUpdateReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
+import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
 
 import javax.validation.Valid;
@@ -98,6 +99,13 @@ public interface TenantService {
      */
     List<TenantDO> getTenantListByPackageId(Long packageId);
 
+    /**
+     * 进行租户的信息处理逻辑
+     * 其中，租户编号从 {@link TenantContextHolder} 上下文中获取
+     *
+     * @param handler 处理器
+     */
+    void handleTenantInfo(TenantInfoHandler handler);
 
     /**
      * 进行租户的菜单处理逻辑

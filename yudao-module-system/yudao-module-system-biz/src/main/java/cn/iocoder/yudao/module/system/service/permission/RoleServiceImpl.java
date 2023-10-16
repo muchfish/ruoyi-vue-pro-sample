@@ -12,11 +12,14 @@ import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleUp
 import cn.iocoder.yudao.module.system.convert.permission.RoleConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.RoleMapper;
+import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.system.enums.permission.DataScopeEnum;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
 import cn.iocoder.yudao.module.system.enums.permission.RoleTypeEnum;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -40,6 +43,9 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 public class RoleServiceImpl implements RoleService {
 
     @Resource
+    private PermissionService permissionService;
+
+    @Resource
     private RoleMapper roleMapper;
 
     @Override
@@ -58,6 +64,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#reqVO.id")
     public void updateRole(RoleUpdateReqVO reqVO) {
         // 校验是否可以更新
         validateRoleForUpdate(reqVO.getId());
@@ -70,6 +77,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
     public void updateRoleStatus(Long id, Integer status) {
         // 校验是否可以更新
         validateRoleForUpdate(id);
@@ -82,11 +90,14 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
     public void deleteRole(Long id) {
         // 校验是否可以更新
         validateRoleForUpdate(id);
         // 标记删除
         roleMapper.deleteById(id);
+        // 删除相关数据
+        permissionService.processRoleDeleted(id);
     }
 
     /**
@@ -144,6 +155,8 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @Cacheable(value = RedisKeyConstants.ROLE, key = "#id",
+            unless = "#result == null")
     public RoleDO getRoleFromCache(Long id) {
         return roleMapper.selectById(id);
     }

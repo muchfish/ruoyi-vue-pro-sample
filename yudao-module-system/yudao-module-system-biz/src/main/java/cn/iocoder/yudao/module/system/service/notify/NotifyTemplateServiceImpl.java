@@ -9,8 +9,11 @@ import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.Notify
 import cn.iocoder.yudao.module.system.convert.notify.NotifyTemplateConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.notify.NotifyTemplateDO;
 import cn.iocoder.yudao.module.system.dal.mysql.notify.NotifyTemplateMapper;
+import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -54,6 +57,8 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     }
 
     @Override
+    @CacheEvict(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
+            allEntries = true) // allEntries 清空所有缓存，因为可能修改到 code 字段，不好清理
     public void updateNotifyTemplate(NotifyTemplateUpdateReqVO updateReqVO) {
         // 校验存在
         validateNotifyTemplateExists(updateReqVO.getId());
@@ -72,6 +77,8 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     }
 
     @Override
+    @CacheEvict(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
+            allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteNotifyTemplate(Long id) {
         // 校验存在
         validateNotifyTemplateExists(id);
@@ -91,6 +98,8 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     }
 
     @Override
+    @Cacheable(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE, key = "#code",
+            unless = "#result == null")
     public NotifyTemplateDO getNotifyTemplateByCodeFromCache(String code) {
         return notifyTemplateMapper.selectByCode(code);
     }

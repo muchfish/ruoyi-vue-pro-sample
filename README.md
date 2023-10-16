@@ -1003,7 +1003,45 @@
 
 
 
+#### redis缓存之声明式缓存Spring Cache和RBAC权限补全
 
-
-
+1. ##### redis缓存之声明式缓存Spring Cache
+   
+   1. ###### Spring Cache配置：[YudaoCacheAutoConfiguration.java](yudao-framework%2Fyudao-spring-boot-starter-redis%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fredis%2Fconfig%2FYudaoCacheAutoConfiguration.java)
+      
+      1. 启用缓存：`@EnableCaching`
+      2. `RedisCacheConfiguration`bean配置：`redisCacheConfiguration(...)`
+         1. `RedisCacheConfiguration`：主要作用是为 Redis 缓存提供具体的配置，包括缓存的过期策略、序列化方式、键前缀、是否允许空值等等。
+         2. `@Primary` : 若存在多个相同bean，以该bean为主
+         3. key分隔符设置使用 : 单冒号，而不是双 :: 冒号，避免 Redis Desktop Manager 多余空格
+         4. 使用 JSON 序列化方式
+         5. 设置 `spring.cache.redis` 的属性
+            1. 统一设置过期时间等
+      3. `RedisCacheManager` bean配置：`redisCacheManager(...)`
+         1. `RedisCacheManager`：使用redis作为Spring Cache的缓存实现
+         2. 使用redisTemplate的连接工厂
+         3. 创建一个非阻塞的 `RedisCacheWriter`
+         4. 创建一个支持自定义过期时间的`RedisCacheManager`
+         5. 自定义过期时间的`RedisCacheManager`：[TimeoutRedisCacheManager.java](yudao-framework%2Fyudao-spring-boot-starter-redis%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fredis%2Fcore%2FTimeoutRedisCacheManager.java)
+            1. `RedisCache createRedisCache(String name, RedisCacheConfiguration cacheConfig)`：为每个`@Cacheable`标注的方法，创建 Redis 缓存实例的方法。
+            2. 规则：在`Cacheable.cacheNames()`格式为 "key#ttl" 时，# 后面的 ttl 为过期时间。单位为最后一个字母（支持的单位有：d 天，h 小时，m 分钟，s 秒），默认单位为 s 秒
+               1. 使用示例：@Cacheable(cacheNames = RedisKeyConstants.PERMISSION_MENU_ID_LIST+"#333s", key = "#permission")
+            3. 解析`Cacheable.cacheNames()`上配置的的过期时间
+            4. 为该名为`Cacheable.cacheNames()`的缓存，设置单独的过期时间
+   2. ###### Spring Cache使用
+      
+      1. `@Cacheable`：标注在方法上。无缓存时，执行完方法后添加缓存。命中缓存时直接返回缓存数据，无需执行方法。一般用于查询方法上
+         - `@Cacheable(value = RedisKeyConstants.MENU_ROLE_ID_LIST, key = "#menuId")`：缓存key为`menu_role_ids:1139`
+      2. `@CachePut`：标注在方法上。直接执行方法，执行完后，将结果缓存。一般用于更新方法上进行缓存更新。注意方法的返回结果类型应该同`@Cacheable`标注的方法结果类型
+      3. `@CacheEvict`：标注在方法上。删除缓存。
+         - `@CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")`：删除单个缓存
+         - `@CacheEvict(cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST, allEntries = true)`：批量删除前缀为`RedisKeyConstants.DEPT_CHILDREN_ID_LIST`的缓存
+         - `@CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, key = "#reqVO.permission",condition = "#reqVO.permission != null")`：有条件的删除缓存
+2. ##### 为[yudao-module-system-biz]之前方法添加上声明式缓存Spring Cache功能
+3. ##### RBAC权限补全：
+   
+   1. `MenuServiceImpl#deleteMenu`：删除菜单时删除该菜单授予给角色的菜单权限（删除role-menu）。[MenuServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fpermission%2FMenuServiceImpl.java)、[PermissionServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fpermission%2FPermissionServiceImpl.java)
+   2. `RoleServiceImpl#deleteRole`：删除角色时删除该角色关联的用户（user-role）和菜单（role-menu）。[RoleServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fpermission%2FRoleServiceImpl.java)
+   3. `AdminUserServiceImpl#createUser`：创建用户时校验租户用户配额是否超限。[AdminUserServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fuser%2FAdminUserServiceImpl.java)
+   4. `AdminUserServiceImpl#deleteUser`：删除用户时删除该用户关联的角色（user-role）。[AdminUserServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fuser%2FAdminUserServiceImpl.java)
 

@@ -16,9 +16,12 @@ import cn.iocoder.yudao.module.system.dal.mysql.dept.UserPostMapper;
 import cn.iocoder.yudao.module.system.dal.mysql.user.AdminUserMapper;
 import cn.iocoder.yudao.module.system.service.dept.DeptService;
 import cn.iocoder.yudao.module.system.service.dept.PostService;
+import cn.iocoder.yudao.module.system.service.permission.PermissionService;
+import cn.iocoder.yudao.module.system.service.tenant.TenantService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +55,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Resource
     private PostService postService;
     @Resource
+    private PermissionService permissionService;
+    @Resource
     private PasswordEncoder passwordEncoder;
+    @Resource
+    @Lazy // 延迟，避免循环依赖报错
+    private TenantService tenantService;
 
     @Resource
     private UserPostMapper userPostMapper;
@@ -61,7 +69,13 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createUser(UserCreateReqVO reqVO) {
-
+        // 校验账户配合
+        tenantService.handleTenantInfo(tenant -> {
+            long count = userMapper.selectCount();
+            if (count >= tenant.getAccountCount()) {
+                throw exception(USER_COUNT_MAX, tenant.getAccountCount());
+            }
+        });
         // 校验正确性
         validateUserForCreateOrUpdate(null, reqVO.getUsername(), reqVO.getMobile(), reqVO.getEmail(),
                 reqVO.getDeptId(), reqVO.getPostIds());
@@ -98,7 +112,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         Set<Long> postIds = updateObj.getPostIds();
         Collection<Long> createPostIds = CollUtil.subtract(postIds, dbPostIds);
         Collection<Long> deletePostIds = CollUtil.subtract(dbPostIds, postIds);
-        // 执行新增和删除。
+        // 执行新增和删除。对于已经授权的菜单，不用做任何处理
         if (!CollectionUtil.isEmpty(createPostIds)) {
             userPostMapper.insertBatch(convertList(createPostIds,
                     postId -> new UserPostDO().setUserId(userId).setPostId(postId)));
@@ -143,6 +157,8 @@ public class AdminUserServiceImpl implements AdminUserService {
         validateUserExists(id);
         // 删除用户
         userMapper.deleteById(id);
+        // 删除用户关联数据
+        permissionService.processUserDeleted(id);
         // 删除用户岗位
         userPostMapper.deleteByUserId(id);
     }
@@ -184,7 +200,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     /**
-     * 获得部门查询条件：查询指定部门的子部门编号们，包括自身
+     * 获得部门条件：查询指定部门的子部门编号们，包括自身
      * @param deptId 部门编号
      * @return 部门编号集合
      */
@@ -278,6 +294,21 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
     }
 
+    /**
+     * 校验旧密码
+     * @param id          用户 id
+     * @param oldPassword 旧密码
+     */
+    @VisibleForTesting
+    void validateOldPassword(Long id, String oldPassword) {
+        AdminUserDO user = userMapper.selectById(id);
+        if (user == null) {
+            throw exception(USER_NOT_EXISTS);
+        }
+        if (!isPasswordMatch(oldPassword, user.getPassword())) {
+            throw exception(USER_PASSWORD_FAILED);
+        }
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class) // 添加事务，异常则回滚所有导入
@@ -317,7 +348,6 @@ public class AdminUserServiceImpl implements AdminUserService {
         return respVO;
     }
 
-
     @Override
     public List<AdminUserDO> getUserListByStatus(Integer status) {
         return userMapper.selectListByStatus(status);
@@ -325,7 +355,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public boolean isPasswordMatch(String rawPassword, String encodedPassword) {
-        return passwordEncoder.matches(rawPassword,encodedPassword);
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
     /**
