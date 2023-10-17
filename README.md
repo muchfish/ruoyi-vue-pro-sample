@@ -1045,3 +1045,60 @@
    3. `AdminUserServiceImpl#createUser`：创建用户时校验租户用户配额是否超限。[AdminUserServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fuser%2FAdminUserServiceImpl.java)
    4. `AdminUserServiceImpl#deleteUser`：删除用户时删除该用户关联的角色（user-role）。[AdminUserServiceImpl.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fservice%2Fuser%2FAdminUserServiceImpl.java)
 
+
+
+#### Redis MQ之点对点模式
+
+1. Redis 流数据模型
+
+   ![](.image/redis-stream.jpg)
+   - `Redis Stream`：Redis 流
+        - Redis Stream的结构如上图，它有一个消息链表，将所有加入的消息都串起来，每个消息都有一个唯一的 ID 和对应的内容。消息是持久化的，Redis 重启后，内容还在。
+        - 每个 Stream 都有唯一的名称，它就是 Redis 的 key，在我们首次使用 xadd 指令追加消息时自动创建。
+   - `Consumer Group`：消费组
+        - 每个 Stream 都可以挂多个消费组（Consumer Group），每个消费组会有个游标 last_delivered_id 在 Stream 数组之上往前移动，表示当前消费组已经消费到哪条消息了。
+          - 每个消费组都有一个 Stream 内唯一的名称，消费组不会自动创建，它需要单独的指令 xgroup create 进行创建，需要指定从 Stream 的某个消息 ID 开始消费，这个 ID 用来初始化 last_delivered_id 变量。
+          - 每个消费组的状态都是独立的，相互不受影响。也就是说同一份 Stream 内部的消息会被每个消费组都消费到。
+   - `Consumer`：消费者
+        - 同一个消费组可以挂接多个消费者（Consumer），这些消费者之间是竞争关系，任意一个消费者读取了消息都会使游标 last_delivered_id 往前移动。
+        - 每个消费者有一个组内唯一名称。
+2. redis mq点对点模式的使用（基于Redis Stream）
+   1. 绑定消息队列：[YudaoMQAutoConfiguration.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fconfig%2FYudaoMQAutoConfiguration.java)#redisStreamMessageListenerContainer(...)方法
+      - 绑定消费者、消费组、Redis Stream、消息监听
+      - `@Bean(initMethod = "start", destroyMethod = "stop")`：
+         
+         - `initMethod`：容器实例化bean后，执行该bean的`start`方法。
+         - `destroyMethod`：在 bean 销毁之前，执行该bean的`stop`方法
+      - `DefaultStreamMessageListenerContainer`：默认消息监听容器
+         - 创建一个`SimpleAsyncTaskExecutor`，用于执行每个消费者任务对该redis stream消息链表消息的监听
+            - `SimpleAsyncTaskExecutor`：为每个任务启动一个新线程的实现，异步执行它。未重用线程。
+      - `DefaultStreamMessageListenerContainerX`：解决 Spring Data Redis + Redisson 结合使用时，Redisson 在 Stream 获得不到数据时，返回 null 而不是空 List，导致 NPE 异常。（经测试为偶发，很难复现）
+        - 只能在相同包下继承`DefaultStreamMessageListenerContainer`类（访问权限为default修饰：类仅可以被同一包中的类访问。）
+        - 利用hutool的`ReflectUtil.invoke(...)`执行父类的私有方法
+        - 修改父类`readFunction`属性的值，解决NPE。该值为Function，调用原值执行apply方法，处理下结果则可解决NPE
+        
+          ```java
+          (Function<ReadOffset, List<ByteRecord>>) readOffset -> {
+                      List<ByteRecord> records = readFunction.apply(readOffset);
+                      //【重点】保证 records 不是空，避免 NPE 的问题！！！
+                      return records != null ? records : Collections.emptyList();
+                  }
+          ```
+        
+          
+   2. 消息类：[AbstractStreamMessage.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Fstream%2FAbstractStreamMessage.java)、[AbstractStreamMessage.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Fstream%2FAbstractStreamMessage.java)
+      - `AbstractStreamMessage#getStreamKey()`：用于指定消息的stream key
+   3. 发送消息：[RedisMQTemplate.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2FRedisMQTemplate.java)#send(T message)
+   4. 监听（消费）消息：[AbstractStreamMessageListener.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Fstream%2FAbstractStreamMessageListener.java)、[TestSendConsumer.java](yudao-module-system%2Fyudao-module-system-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Fsystem%2Fmq%2Fconsumer%2Ftest%2FTestSendConsumer.java)
+3. 点对点消息监听类执行流程
+   
+   ![消息监听](.image/redis-stream点对点消息监听流程.png)
+   
+   ​	（各类的说明见上图）
+   
+   - 执行流程：`DefaultStreamMessageListenerContainer#start` -> 遍历`ist<Subscription>` -> 取出`StreamPollTask` -> 使用`SimpleAsyncTaskExecutor`为每个任务启动一个新线程的实现，异步执行
+
+
+
+
+

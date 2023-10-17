@@ -17,6 +17,9 @@
         <module>yudao-spring-boot-starter-redis</module>
         <module>yudao-spring-boot-starter-web</module>
         <module>yudao-spring-boot-starter-security</module>
+
+        <module>yudao-spring-boot-starter-mq</module>
+
         <module>yudao-spring-boot-starter-excel</module>
 
         <module>yudao-spring-boot-starter-biz-operatelog</module>

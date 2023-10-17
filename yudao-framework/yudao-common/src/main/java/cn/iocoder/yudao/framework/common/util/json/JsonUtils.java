@@ -49,6 +49,18 @@ public class JsonUtils {
         return objectMapper.writeValueAsString(object);
     }
 
+    public static <T> T parseObject(String text, Class<T> clazz) {
+        if (StrUtil.isEmpty(text)) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(text, clazz);
+        } catch (IOException e) {
+            log.error("json parse err,json:{}", text, e);
+            throw new RuntimeException(e);
+        }
+    }
+
     public static <T> T parseObject(String text, TypeReference<T> typeReference) {
         try {
             return objectMapper.readValue(text, typeReference);
