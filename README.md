@@ -1094,11 +1094,14 @@
    
    ![消息监听](.image/redis-stream点对点消息监听流程.png)
    
-   ​	（各类的说明见上图）
+   	（各类的说明见上图）
    
    - 执行流程：`DefaultStreamMessageListenerContainer#start` -> 遍历`ist<Subscription>` -> 取出`StreamPollTask` -> 使用`SimpleAsyncTaskExecutor`为每个任务启动一个新线程的实现，异步执行
 
 
-
+#### Redis Stream 消息消费超时后重新消费（定时任务） [RedisPendingMessageResendJob.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fjob%2FRedisPendingMessageResendJob.java)
+> 消费者内部会有一个状态变量 pending_ids，它记录了当前已经被客户端读取，但是还没有 ack 的消息。
+> 如果客户端没有 ack，这个变量里面的消息 ID 就会越来越多，一旦某个消息被 ack，它就开始减少。
+> 这个 pending_ids 变量在 Redis 官方被称为 PEL，也就是 Pending Entries List，这是一个核心的数据结构，它用来确保客户端至少消费了消息一次，而不会在网络传输的中途丢失了而没被处理。
 
 

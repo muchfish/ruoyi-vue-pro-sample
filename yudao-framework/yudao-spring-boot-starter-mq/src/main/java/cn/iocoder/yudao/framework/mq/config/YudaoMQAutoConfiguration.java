@@ -6,8 +6,11 @@ import cn.hutool.system.SystemUtil;
 import cn.iocoder.yudao.framework.common.enums.DocumentEnum;
 import cn.iocoder.yudao.framework.mq.core.RedisMQTemplate;
 import cn.iocoder.yudao.framework.mq.core.stream.AbstractStreamMessageListener;
+import cn.iocoder.yudao.framework.mq.job.RedisPendingMessageResendJob;
 import cn.iocoder.yudao.framework.redis.config.YudaoRedisAutoConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -44,6 +47,20 @@ public class YudaoMQAutoConfiguration {
     }
 
     // ========== 消费者相关 ==========
+
+
+    /**
+     * 创建 Redis Stream 重新消费的任务
+     */
+    @Bean
+    @ConditionalOnBean(AbstractStreamMessageListener.class) // 只有 AbstractStreamMessageListener 存在的时候，才需要注册 Redis pubsub 监听
+    @ConditionalOnProperty(prefix = "yudao.mq.redis.stream", value = "enable", matchIfMissing = true) // 允许使用 yudao.mq.redis.stream.enable=false 禁用多租户
+    public RedisPendingMessageResendJob redisPendingMessageResendJob(List<AbstractStreamMessageListener<?>> listeners,
+                                                                     RedisMQTemplate redisTemplate,
+                                                                     @Value("${spring.application.name}") String groupName,
+                                                                     RedissonClient redissonClient) {
+        return new RedisPendingMessageResendJob(listeners, redisTemplate, groupName, redissonClient);
+    }
 
     /**
      * 创建 Redis Stream 点对点消费的容器
