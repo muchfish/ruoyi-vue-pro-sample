@@ -1,21 +1,14 @@
 package cn.iocoder.yudao.module.system.mq.message.test;
 
-import cn.iocoder.yudao.framework.mq.core.stream.AbstractStreamMessage;
+import cn.iocoder.yudao.framework.mq.core.pubsub.AbstractChannelMessage;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-
-/**
- * 测试发送消息
- *
- * @author 芋道源码
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class TestSendMessage extends AbstractStreamMessage {
-
+public class TestPubSubMessage extends AbstractChannelMessage {
     /**
      * 邮件日志编号
      */
@@ -46,10 +39,8 @@ public class TestSendMessage extends AbstractStreamMessage {
      */
     @NotEmpty(message = "邮件内容不能为空")
     private String content;
-
     @Override
-    public String getStreamKey() {
-        return "system.test.send";
+    public String getChannel() {
+        return "system.test.pubsub";
     }
-
 }

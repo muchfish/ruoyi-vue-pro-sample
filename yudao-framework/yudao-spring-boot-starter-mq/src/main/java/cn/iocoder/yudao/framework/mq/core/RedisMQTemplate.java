@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.mq.core;
 
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+import cn.iocoder.yudao.framework.mq.core.pubsub.AbstractChannelMessage;
 import cn.iocoder.yudao.framework.mq.core.stream.AbstractStreamMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,6 +20,20 @@ public class RedisMQTemplate {
     @Getter
     private final RedisTemplate<String, ?> redisTemplate;
 
+    /**
+     * 发送 Redis 消息，基于 Redis pub/sub 实现
+     *
+     * @param message 消息
+     */
+    public <T extends AbstractChannelMessage> void send(T message) {
+        try {
+
+            // 发送消息
+            redisTemplate.convertAndSend(message.getChannel(), JsonUtils.toJsonString(message));
+        } finally {
+
+        }
+    }
 
     /**
      * 发送 Redis 消息，基于 Redis Stream 实现

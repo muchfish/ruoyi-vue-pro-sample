@@ -60,6 +60,17 @@ public class JsonUtils {
             throw new RuntimeException(e);
         }
     }
+    public static <T> T parseObject(byte[] bytes, Class<T> clazz) {
+        if (ArrayUtil.isEmpty(bytes)) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(bytes, clazz);
+        } catch (IOException e) {
+            log.error("json parse err,json:{}", bytes, e);
+            throw new RuntimeException(e);
+        }
+    }
 
     public static <T> T parseObject(String text, TypeReference<T> typeReference) {
         try {

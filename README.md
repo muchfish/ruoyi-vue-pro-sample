@@ -1105,3 +1105,11 @@
 > 这个 pending_ids 变量在 Redis 官方被称为 PEL，也就是 Pending Entries List，这是一个核心的数据结构，它用来确保客户端至少消费了消息一次，而不会在网络传输的中途丢失了而没被处理。
 
 
+#### Redis的pub/sub
+1. redis的发布订阅模型
+
+   ![](.image/redis-pus-sub.png)
+2. redis发布订阅模式的缺陷
+   1. 无消费者时消息丢失
+   2. 消息不能持久化，所以基本弃用。
+   3. 应该可以结合redis stream实现可靠的redistribution stream。但也有可能redis stream建立多个消费组就实现了发布订阅的需求。

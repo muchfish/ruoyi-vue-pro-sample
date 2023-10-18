@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.system.SystemUtil;
 import cn.iocoder.yudao.framework.common.enums.DocumentEnum;
 import cn.iocoder.yudao.framework.mq.core.RedisMQTemplate;
+import cn.iocoder.yudao.framework.mq.core.pubsub.AbstractChannelMessageListener;
 import cn.iocoder.yudao.framework.mq.core.stream.AbstractStreamMessageListener;
 import cn.iocoder.yudao.framework.mq.job.RedisPendingMessageResendJob;
 import cn.iocoder.yudao.framework.redis.config.YudaoRedisAutoConfiguration;
@@ -15,6 +16,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisServerCommands;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
@@ -22,7 +24,12 @@ import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.stream.DefaultStreamMessageListenerContainerX;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -48,6 +55,27 @@ public class YudaoMQAutoConfiguration {
 
     // ========== 消费者相关 ==========
 
+    /**
+     * 创建 Redis Pub/Sub 广播消费的容器，未使用redis stream，消息不能持久化，所以基本弃用。（应该可以结合redis stream实现可靠的pub/sub。但也有可能建立多个消费组就实现了发布订阅）
+     */
+    @Bean(initMethod = "start", destroyMethod = "stop")
+    @ConditionalOnBean(AbstractChannelMessageListener.class) // 只有 AbstractChannelMessageListener 存在的时候，才需要注册 Redis pubsub 监听
+    @ConditionalOnProperty(prefix = "yudao.mq.redis.pubsub", value = "enable", matchIfMissing = true) // 允许使用 yudao.mq.redis.pubsub.enable=false 禁用多租户
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisMQTemplate redisMQTemplate, List<AbstractChannelMessageListener<?>> listeners) {
+        // 创建 RedisMessageListenerContainer 对象
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        // 设置 RedisConnection 工厂。
+        container.setConnectionFactory(redisMQTemplate.getRedisTemplate().getRequiredConnectionFactory());
+        // 添加监听器
+        listeners.forEach(listener -> {
+            listener.setRedisMQTemplate(redisMQTemplate);
+            container.addMessageListener(listener, new ChannelTopic(listener.getChannel()));
+            log.info("[redisMessageListenerContainer][注册 Channel({}) 对应的监听器({})]",
+                    listener.getChannel(), listener.getClass().getName());
+        });
+        return container;
+    }
 
     /**
      * 创建 Redis Stream 重新消费的任务
