@@ -3,12 +3,15 @@ package cn.iocoder.yudao.framework.mq.core.pubsub;
 import cn.hutool.core.util.TypeUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.mq.core.RedisMQTemplate;
+import cn.iocoder.yudao.framework.mq.core.interceptor.RedisMessageInterceptor;
+import cn.iocoder.yudao.framework.mq.core.message.AbstractRedisMessage;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * Redis Pub/Sub 监听器抽象类，用于实现广播消费
@@ -52,11 +55,11 @@ public abstract class AbstractChannelMessageListener<T extends AbstractChannelMe
     public final void onMessage(Message message, byte[] bytes) {
         T messageObj = JsonUtils.parseObject(message.getBody(), messageType);
         try {
-
+            consumeMessageBefore(messageObj);
             // 消费消息
             this.onMessage(messageObj);
         } finally {
-
+            consumeMessageAfter(messageObj);
         }
     }
 
@@ -81,7 +84,20 @@ public abstract class AbstractChannelMessageListener<T extends AbstractChannelMe
         return (Class<T>) type;
     }
 
+    private void consumeMessageBefore(AbstractRedisMessage message) {
+        assert redisMQTemplate != null;
+        List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+        // 正序
+        interceptors.forEach(interceptor -> interceptor.consumeMessageBefore(message));
+    }
 
-
+    private void consumeMessageAfter(AbstractRedisMessage message) {
+        assert redisMQTemplate != null;
+        List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+        // 倒序
+        for (int i = interceptors.size() - 1; i >= 0; i--) {
+            interceptors.get(i).consumeMessageAfter(message);
+        }
+    }
 
 }

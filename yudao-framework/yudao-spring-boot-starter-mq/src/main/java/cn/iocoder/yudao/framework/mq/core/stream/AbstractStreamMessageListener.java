@@ -3,6 +3,8 @@ package cn.iocoder.yudao.framework.mq.core.stream;
 import cn.hutool.core.util.TypeUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.mq.core.RedisMQTemplate;
+import cn.iocoder.yudao.framework.mq.core.interceptor.RedisMessageInterceptor;
+import cn.iocoder.yudao.framework.mq.core.message.AbstractRedisMessage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -11,6 +13,7 @@ import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.stream.StreamListener;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * Redis Stream 监听器抽象类，用于实现集群消费
@@ -55,7 +58,7 @@ public abstract class AbstractStreamMessageListener<T extends AbstractStreamMess
         // 消费消息
         T messageObj = JsonUtils.parseObject(message.getValue(), messageType);
         try {
-
+            consumeMessageBefore(messageObj);
             // 消费消息
             this.onMessage(messageObj);
             // ack 消息消费完成
@@ -66,7 +69,7 @@ public abstract class AbstractStreamMessageListener<T extends AbstractStreamMess
             // 3. 消费日志；以及通用的幂等性
             // 4. 消费失败的重试，https://zhuanlan.zhihu.com/p/60501638
         } finally {
-
+            consumeMessageAfter(messageObj);
         }
     }
 
@@ -91,6 +94,20 @@ public abstract class AbstractStreamMessageListener<T extends AbstractStreamMess
         return (Class<T>) type;
     }
 
+    private void consumeMessageBefore(AbstractRedisMessage message) {
+        assert redisMQTemplate != null;
+        List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+        // 正序
+        interceptors.forEach(interceptor -> interceptor.consumeMessageBefore(message));
+    }
 
+    private void consumeMessageAfter(AbstractRedisMessage message) {
+        assert redisMQTemplate != null;
+        List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+        // 倒序
+        for (int i = interceptors.size() - 1; i >= 0; i--) {
+            interceptors.get(i).consumeMessageAfter(message);
+        }
+    }
 
 }

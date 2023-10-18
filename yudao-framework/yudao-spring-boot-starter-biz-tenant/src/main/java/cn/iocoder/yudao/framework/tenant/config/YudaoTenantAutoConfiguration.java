@@ -3,6 +3,7 @@ package cn.iocoder.yudao.framework.tenant.config;
 import cn.iocoder.yudao.framework.common.enums.WebFilterOrderEnum;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
+import cn.iocoder.yudao.framework.tenant.core.mq.TenantRedisMessageInterceptor;
 import cn.iocoder.yudao.framework.tenant.core.security.TenantSecurityWebFilter;
 import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkServiceImpl;
@@ -64,4 +65,10 @@ public class YudaoTenantAutoConfiguration {
         return registrationBean;
     }
 
+    // ========== MQ ==========
+
+    @Bean
+    public TenantRedisMessageInterceptor tenantRedisMessageInterceptor() {
+        return new TenantRedisMessageInterceptor();
+    }
 }

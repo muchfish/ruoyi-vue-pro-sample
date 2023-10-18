@@ -1066,7 +1066,7 @@
    1. 绑定消息队列：[YudaoMQAutoConfiguration.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fconfig%2FYudaoMQAutoConfiguration.java)#redisStreamMessageListenerContainer(...)方法
       - 绑定消费者、消费组、Redis Stream、消息监听
       - `@Bean(initMethod = "start", destroyMethod = "stop")`：
-         
+        
          - `initMethod`：容器实例化bean后，执行该bean的`start`方法。
          - `destroyMethod`：在 bean 销毁之前，执行该bean的`stop`方法
       - `DefaultStreamMessageListenerContainer`：默认消息监听容器
@@ -1085,7 +1085,7 @@
                   }
           ```
         
-          
+      
    2. 消息类：[AbstractStreamMessage.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Fstream%2FAbstractStreamMessage.java)、[AbstractStreamMessage.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Fstream%2FAbstractStreamMessage.java)
       - `AbstractStreamMessage#getStreamKey()`：用于指定消息的stream key
    3. 发送消息：[RedisMQTemplate.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2FRedisMQTemplate.java)#send(T message)
@@ -1113,3 +1113,169 @@
    1. 无消费者时消息丢失
    2. 消息不能持久化，所以基本弃用。
    3. 应该可以结合redis stream实现可靠的redistribution stream。但也有可能redis stream建立多个消费组就实现了发布订阅的需求。
+
+#### 自定义redis消息拦截器，实现拓展
+1. 拦截器规范：[RedisMessageInterceptor.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Finterceptor%2FRedisMessageInterceptor.java)
+
+   ```java
+   public interface RedisMessageInterceptor {
+   
+       default void sendMessageBefore(AbstractRedisMessage message) {
+       }
+   
+       default void sendMessageAfter(AbstractRedisMessage message) {
+       }
+   
+       default void consumeMessageBefore(AbstractRedisMessage message) {
+       }
+   
+       default void consumeMessageAfter(AbstractRedisMessage message) {
+       }
+   
+   }
+   ```
+
+   1. 可插拔
+   2. 拦截器先进后出
+
+2. 拦截器装配：
+
+   ```java
+       @Bean
+       public RedisMQTemplate redisMQTemplate(StringRedisTemplate redisTemplate,
+                                              List<RedisMessageInterceptor> interceptors) {
+           RedisMQTemplate redisMQTemplate = new RedisMQTemplate(redisTemplate);
+           // 添加拦截器
+           interceptors.forEach(redisMQTemplate::addInterceptor);
+           return redisMQTemplate;
+       }
+   ```
+
+3. 拦截器应用原理：
+
+   1. 发送方：[RedisMQTemplate.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2FRedisMQTemplate.java)
+
+      ```java
+          /**
+           * 发送 Redis 消息，基于 Redis pub/sub 实现
+           *
+           * @param message 消息
+           */
+          public <T extends AbstractChannelMessage> void send(T message) {
+              try {
+                  sendMessageBefore(message);
+                  // 发送消息
+                  redisTemplate.convertAndSend(message.getChannel(), JsonUtils.toJsonString(message));
+              } finally {
+                  sendMessageAfter(message);
+              }
+          }
+      
+          /**
+           * 发送 Redis 消息，基于 Redis Stream 实现
+           *
+           * @param message 消息
+           * @return 消息记录的编号对象
+           */
+          public <T extends AbstractStreamMessage> RecordId send(T message) {
+              try {
+                  sendMessageBefore(message);
+                  // 发送消息
+                  return redisTemplate.opsForStream().add(StreamRecords.newRecord()
+                          .ofObject(JsonUtils.toJsonString(message)) // 设置内容
+                          .withStreamKey(message.getStreamKey())); // 设置 stream key
+              } finally {
+                  sendMessageAfter(message);
+              }
+          }
+      
+      
+          private void sendMessageBefore(AbstractRedisMessage message) {
+              // 正序
+              interceptors.forEach(interceptor -> interceptor.sendMessageBefore(message));
+          }
+      
+          private void sendMessageAfter(AbstractRedisMessage message) {
+              // 倒序
+              for (int i = interceptors.size() - 1; i >= 0; i--) {
+                  interceptors.get(i).sendMessageAfter(message);
+              }
+          }
+      ```
+
+   2. 消费方：
+
+      1. redis stream：[AbstractStreamMessageListener.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Fstream%2FAbstractStreamMessageListener.java)
+
+         ```java
+             @Override
+             public void onMessage(ObjectRecord<String, String> message) {
+                 // 消费消息
+                 T messageObj = JsonUtils.parseObject(message.getValue(), messageType);
+                 try {
+                     consumeMessageBefore(messageObj);
+                     // 消费消息
+                     this.onMessage(messageObj);
+                     // ack 消息消费完成
+                     redisMQTemplate.getRedisTemplate().opsForStream().acknowledge(group, message);
+                     // TODO 芋艿：需要额外考虑以下几个点：
+                     // 1. 处理异常的情况
+                     // 2. 发送日志；以及事务的结合
+                     // 3. 消费日志；以及通用的幂等性
+                     // 4. 消费失败的重试，https://zhuanlan.zhihu.com/p/60501638
+                 } finally {
+                     consumeMessageAfter(messageObj);
+                 }
+             }
+         
+         
+             private void consumeMessageBefore(AbstractRedisMessage message) {
+                 assert redisMQTemplate != null;
+                 List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+                 // 正序
+                 interceptors.forEach(interceptor -> interceptor.consumeMessageBefore(message));
+             }
+         
+             private void consumeMessageAfter(AbstractRedisMessage message) {
+                 assert redisMQTemplate != null;
+                 List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+                 // 倒序
+                 for (int i = interceptors.size() - 1; i >= 0; i--) {
+                     interceptors.get(i).consumeMessageAfter(message);
+                 }
+             }
+         ```
+
+      2. pub/sub：[AbstractChannelMessageListener.java](yudao-framework%2Fyudao-spring-boot-starter-mq%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fmq%2Fcore%2Fpubsub%2FAbstractChannelMessageListener.java)
+
+         ```java
+             @Override
+             public final void onMessage(Message message, byte[] bytes) {
+                 T messageObj = JsonUtils.parseObject(message.getBody(), messageType);
+                 try {
+                     consumeMessageBefore(messageObj);
+                     // 消费消息
+                     this.onMessage(messageObj);
+                 } finally {
+                     consumeMessageAfter(messageObj);
+                 }
+             }
+         
+             private void consumeMessageBefore(AbstractRedisMessage message) {
+                 assert redisMQTemplate != null;
+                 List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+                 // 正序
+                 interceptors.forEach(interceptor -> interceptor.consumeMessageBefore(message));
+             }
+         
+             private void consumeMessageAfter(AbstractRedisMessage message) {
+                 assert redisMQTemplate != null;
+                 List<RedisMessageInterceptor> interceptors = redisMQTemplate.getInterceptors();
+                 // 倒序
+                 for (int i = interceptors.size() - 1; i >= 0; i--) {
+                     interceptors.get(i).consumeMessageAfter(message);
+                 }
+             }
+         ```
+
+4. 拦截器实现：[TenantRedisMessageInterceptor.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Fmq%2FTenantRedisMessageInterceptor.java)
