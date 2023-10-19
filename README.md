@@ -1279,3 +1279,41 @@
          ```
 
 4. 拦截器实现：[TenantRedisMessageInterceptor.java](yudao-framework%2Fyudao-spring-boot-starter-biz-tenant%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Ftenant%2Fcore%2Fmq%2FTenantRedisMessageInterceptor.java)
+
+#### 邮箱管理
+1. 电子邮件的工作原理
+
+   邮件发送：电子邮件客户端(链接SMTP服务器发送邮件) ->SMTP服务器（解析收件人地址，提取@符后域名，解析DNS，连接POP3服务器或IMAP服务器，发送邮件）->POP3服务器或IMAP服务器(存放邮件)
+
+   邮件接收：电子邮件客户端(链接POP3服务器或IMAP服务器接收邮件)
+
+   1. **电子邮件客户端**：
+      发送和接收电子邮件的过程始于电子邮件客户端，这是您用来编写、发送和接收电子邮件的应用程序或工具，如Outlook、Gmail、Thunderbird等。
+
+   2. **电子邮件服务器**：
+      电子邮件服务器是用来存储和管理电子邮件的计算机或服务器。通常，有两种主要类型的服务器：
+      - **SMTP服务器（Simple Mail Transfer Protocol）**：SMTP服务器用于发送电子邮件。当您编写一封电子邮件并点击“发送”时，您的电子邮件客户端将连接到SMTP服务器，将电子邮件发送给服务器。
+      - **POP3服务器或IMAP服务器**：POP3（Post Office Protocol 3）和IMAP（Internet Message Access Protocol）服务器用于接收电子邮件。这些服务器存储已发送的邮件，并允许电子邮件客户端从中检索邮件。
+
+   3. **发送电子邮件**：
+      当您编写一封电子邮件并点击“发送”时，您的电子邮件客户端将连接到SMTP服务器，并将电子邮件传输给SMTP服务器。SMTP服务器将电子邮件路由到目标接收者的电子邮件服务器。
+
+   4. **接收电子邮件**：
+      接收电子邮件的过程涉及到POP3或IMAP服务器。当您的电子邮件客户端检查新邮件时，它将连接到POP3或IMAP服务器，将新邮件下载到您的电子邮件客户端。
+
+   5. **邮件传递**：
+      一旦电子邮件到达接收者的电子邮件服务器，接收者可以使用电子邮件客户端或Web邮箱来查看和管理电子邮件。
+
+   6. **邮件协议**：
+      电子邮件通信遵循特定的邮件协议，如SMTP、POP3、IMAP等，以确保电子邮件的可靠传递和接收。这些协议规定了消息格式、传输规则和服务器之间的通信方式。
+
+   7. **电子邮件地址**：
+      每个电子邮件地址都是唯一的，通常由一个用户名（如user@example.com）和一个域名组成。电子邮件地址用于标识和路由电子邮件。
+2. 
+
+   
+
+   
+
+
+
