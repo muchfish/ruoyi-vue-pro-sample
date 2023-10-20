@@ -1,7 +1,5 @@
 package cn.iocoder.yudao.module.system.dal.redis;
 
-
-
 /**
  * System Redis Key 枚举类
  *
@@ -58,5 +56,19 @@ public interface RedisKeyConstants {
      */
     String NOTIFY_TEMPLATE = "notify_template";
 
+    /**
+     * 邮件账号的缓存
+     * <p>
+     * KEY 格式：sms_template:{id}
+     * VALUE 数据格式：String 账号信息
+     */
+    String MAIL_ACCOUNT = "mail_account";
 
+    /**
+     * 邮件模版的缓存
+     * <p>
+     * KEY 格式：mail_template:{code}
+     * VALUE 数据格式：String 模版信息
+     */
+    String MAIL_TEMPLATE = "mail_template";
 }
