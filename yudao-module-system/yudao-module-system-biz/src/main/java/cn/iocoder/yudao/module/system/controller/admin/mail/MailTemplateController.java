@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.mail.vo.template.*;
 import cn.iocoder.yudao.module.system.convert.mail.MailTemplateConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailTemplateDO;
+import cn.iocoder.yudao.module.system.service.mail.MailSendService;
 import cn.iocoder.yudao.module.system.service.mail.MailTemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +18,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 邮件模版")
 @RestController
@@ -25,6 +27,8 @@ public class MailTemplateController {
 
     @Resource
     private MailTemplateService mailTempleService;
+    @Resource
+    private MailSendService mailSendService;
 
     @PostMapping("/create")
     @Operation(summary = "创建邮件模版")
@@ -74,6 +78,12 @@ public class MailTemplateController {
         return success(MailTemplateConvert.INSTANCE.convertList02(list));
     }
 
-
+    @PostMapping("/send-mail")
+    @Operation(summary = "发送短信")
+    @PreAuthorize("@ss.hasPermission('system:mail-template:send-mail')")
+    public CommonResult<Long> sendMail(@Valid @RequestBody MailTemplateSendReqVO sendReqVO) {
+        return success(mailSendService.sendSingleMailToAdmin(sendReqVO.getMail(), getLoginUserId(),
+                sendReqVO.getTemplateCode(), sendReqVO.getTemplateParams()));
+    }
 
 }
