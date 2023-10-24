@@ -73,6 +73,13 @@ public interface AdminUserService {
      */
     AdminUserDO getUserByUsername(String username);
 
+    /**
+     * 通过手机号获取用户
+     *
+     * @param mobile 手机号
+     * @return 用户对象信息
+     */
+    AdminUserDO getUserByMobile(String mobile);
 
     /**
      * 获得用户分页列表

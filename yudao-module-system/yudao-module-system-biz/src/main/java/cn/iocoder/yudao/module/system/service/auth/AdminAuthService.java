@@ -2,6 +2,8 @@ package cn.iocoder.yudao.module.system.service.auth;
 
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginRespVO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsLoginReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsSendReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 
 import javax.validation.Valid;
@@ -39,4 +41,19 @@ public interface AdminAuthService {
      * @param logType 登出类型
      */
     void logout(String token, Integer logType);
+
+    /**
+     * 短信验证码发送
+     *
+     * @param reqVO 发送请求
+     */
+    void sendSmsCode(AuthSmsSendReqVO reqVO);
+
+    /**
+     * 短信登录
+     *
+     * @param reqVO 登录信息
+     * @return 登录结果
+     */
+    AuthLoginRespVO smsLogin(AuthSmsLoginReqVO reqVO) ;
 }

@@ -25,6 +25,8 @@
         <mybatis-plus.version>3.5.3.2</mybatis-plus.version>
         <dynamic-datasource.version>3.6.1</dynamic-datasource.version>
         <redisson.version>3.18.0</redisson.version>
+        <!-- 监控相关 -->
+        <opentracing.version>0.33.0</opentracing.version>
         <!-- 工具类相关 -->
         <captcha-plus.version>1.0.7</captcha-plus.version>
         <lombok.version>1.18.28</lombok.version>
@@ -34,6 +36,10 @@
         <guava.version>32.0.1-jre</guava.version>
         <transmittable-thread-local.version>2.14.2</transmittable-thread-local.version>
         <ip2region.version>2.7.0</ip2region.version>
+        <!-- 三方云服务相关 -->
+        <aliyun-java-sdk-core.version>4.6.4</aliyun-java-sdk-core.version>
+        <aliyun-java-sdk-dysmsapi.version>2.2.1</aliyun-java-sdk-dysmsapi.version>
+        <tencentcloud-sdk-java.version>3.1.853</tencentcloud-sdk-java.version>
     </properties>
 
 
@@ -62,6 +68,11 @@
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>
                 <artifactId>yudao-spring-boot-starter-biz-dict</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.iocoder.boot</groupId>
+                <artifactId>yudao-spring-boot-starter-biz-sms</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -148,6 +159,23 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- 监控相关 -->
+            <dependency>
+                <groupId>io.opentracing</groupId>
+                <artifactId>opentracing-api</artifactId>
+                <version>${opentracing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentracing</groupId>
+                <artifactId>opentracing-util</artifactId>
+                <version>${opentracing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentracing</groupId>
+                <artifactId>opentracing-noop</artifactId>
+                <version>${opentracing.version}</version>
+            </dependency>
+
             <!-- 工具类相关 -->
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>
@@ -219,6 +247,35 @@
                 <version>${ip2region.version}</version>
             </dependency>
 
+            <!-- 三方云服务相关 -->
+
+            <!-- SMS SDK begin -->
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>aliyun-java-sdk-core</artifactId>
+                <version>${aliyun-java-sdk-core.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>opentracing-api</artifactId>
+                        <groupId>io.opentracing</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>opentracing-util</artifactId>
+                        <groupId>io.opentracing</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>aliyun-java-sdk-dysmsapi</artifactId>
+                <version>${aliyun-java-sdk-dysmsapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.tencentcloudapi</groupId>
+                <artifactId>tencentcloud-sdk-java-sms</artifactId>
+                <version>${tencentcloud-sdk-java.version}</version>
+            </dependency>
+            <!-- SMS SDK end -->
         </dependencies>
     </dependencyManagement>
 </project>

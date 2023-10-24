@@ -1,6 +1,11 @@
 package cn.iocoder.yudao.module.system.convert.auth;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeSendReqDTO;
+import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthPermissionInfoRespVO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsLoginReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsSendReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
@@ -14,7 +19,6 @@ import java.util.*;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
 import static cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO.ID_ROOT;
-
 
 @Mapper
 public interface AuthConvert {
@@ -42,6 +46,9 @@ public interface AuthConvert {
      * @return 菜单树
      */
     default List<AuthPermissionInfoRespVO.MenuVO> buildMenuTree(List<MenuDO> menuList) {
+        if (CollUtil.isEmpty(menuList)) {
+            return Collections.emptyList();
+        }
         // 移除按钮
         menuList.removeIf(menu -> menu.getType().equals(MenuTypeEnum.BUTTON.getType()));
         // 排序，保证菜单的有序性
@@ -71,5 +78,8 @@ public interface AuthConvert {
     }
 
 
+    SmsCodeSendReqDTO convert(AuthSmsSendReqVO reqVO);
+
+    SmsCodeUseReqDTO convert(AuthSmsLoginReqVO reqVO, Integer scene, String usedIp);
 
 }

@@ -11,11 +11,16 @@ import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.system.api.logger.dto.LoginLogCreateReqDTO;
+import cn.iocoder.yudao.module.system.api.sms.SmsCodeApi;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginRespVO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsLoginReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsSendReqVO;
+import cn.iocoder.yudao.module.system.convert.auth.AuthConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.enums.logger.LoginLogTypeEnum;
 import cn.iocoder.yudao.module.system.enums.logger.LoginResultEnum;
+import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
 import cn.iocoder.yudao.module.system.service.logger.LoginLogService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import com.xingyuv.captcha.model.common.ResponseModel;
@@ -31,6 +36,7 @@ import javax.validation.Validator;
 import java.util.Objects;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
@@ -50,7 +56,8 @@ public class AdminAuthServiceImpl implements AdminAuthService {
     private Validator validator;
     @Resource
     private CaptchaService captchaService;
-
+    @Resource
+    private SmsCodeApi smsCodeApi;
 
     /**
      * 验证码的开关，默认为 true
@@ -91,6 +98,30 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         return createTokenAfterLoginSuccess(user.getId(), reqVO.getUsername(), LoginLogTypeEnum.LOGIN_USERNAME);
     }
 
+    @Override
+    public void sendSmsCode(AuthSmsSendReqVO reqVO) {
+        // 登录场景，验证是否存在
+        if (userService.getUserByMobile(reqVO.getMobile()) == null) {
+            throw exception(AUTH_MOBILE_NOT_EXISTS);
+        }
+        // 发送验证码
+        smsCodeApi.sendSmsCode(AuthConvert.INSTANCE.convert(reqVO).setCreateIp(getClientIP()));
+    }
+
+    @Override
+    public AuthLoginRespVO smsLogin(AuthSmsLoginReqVO reqVO) {
+        // 校验验证码
+        smsCodeApi.useSmsCode(AuthConvert.INSTANCE.convert(reqVO, SmsSceneEnum.ADMIN_MEMBER_LOGIN.getScene(), getClientIP()));
+
+        // 获得用户信息
+        AdminUserDO user = userService.getUserByMobile(reqVO.getMobile());
+        if (user == null) {
+            throw exception(USER_NOT_EXISTS);
+        }
+
+        // 创建 Token 令牌，记录登录日志
+        return createTokenAfterLoginSuccess(user.getId(), reqVO.getMobile(), LoginLogTypeEnum.LOGIN_MOBILE);
+    }
 
     private void createLoginLog(Long userId, String username,
                                 LoginLogTypeEnum logTypeEnum, LoginResultEnum loginResult) {

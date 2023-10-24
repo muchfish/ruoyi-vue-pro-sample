@@ -168,6 +168,10 @@ public class AdminUserServiceImpl implements AdminUserService {
         return userMapper.selectByUsername(username);
     }
 
+    @Override
+    public AdminUserDO getUserByMobile(String mobile) {
+        return userMapper.selectByMobile(mobile);
+    }
 
     @Override
     public PageResult<AdminUserDO> getUserPage(UserPageReqVO reqVO) {

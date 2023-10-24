@@ -80,4 +80,18 @@ public class JsonUtils {
             throw new RuntimeException(e);
         }
     }
+
+    public static <T> List<T> parseArray(String text, Class<T> clazz) {
+        if (StrUtil.isEmpty(text)) {
+            return new ArrayList<>();
+        }
+        try {
+            return objectMapper.readValue(text, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+        } catch (IOException e) {
+            log.error("json parse err,json:{}", text, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

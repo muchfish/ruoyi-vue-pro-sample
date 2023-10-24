@@ -1348,3 +1348,50 @@
 
 > 邮箱账号里面,用户名必须填写邮箱地址.
 
+#### 短信管理
+1. sms组件代码结构图
+   1. 简单工厂模式创建短信客户端
+   
+      ![](.image/sms-client-simple-factory.png)
+      - [简单工厂模式百度百科](https://baike.baidu.com/item/%E7%AE%80%E5%8D%95%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/8801727)
+   
+   2. 模板方法模式执行短信发送等功能
+   
+      ![](.image/sms-client-template-method.png)
+      - [模板方法模式csdn](https://blog.csdn.net/wang0907/article/details/122927897)
+   
+   3. 使用函数式接口实现短信平台api错误码和全局错误码类(ErrorCode)的转换(不知道是不是一种设计模式):[SmsCodeMapping.java](yudao-framework%2Fyudao-spring-boot-starter-biz-sms%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fsms%2Fcore%2Fclient%2FSmsCodeMapping.java)
+   
+      ![](.image/smsCodeMapping.png)
+   
+   4. SmsCodeMapping的使用
+   
+      [SmsCommonResult.java](yudao-framework%2Fyudao-spring-boot-starter-biz-sms%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fsms%2Fcore%2Fclient%2FSmsCommonResult.java):短信的 CommonResult 拓展类,SmsCodeMapping在其build方法(核心方法,构建返回结果)中使用,翻译错误码
+   
+      ```java
+          public static <T> SmsCommonResult<T> build(String apiCode, String apiMsg, String apiRequestId,
+                                                     T data, SmsCodeMapping codeMapping) {
+              Assert.notNull(codeMapping, "参数 codeMapping 不能为空");
+              SmsCommonResult<T> result = new SmsCommonResult<T>().setApiCode(apiCode).setApiMsg(apiMsg).setApiRequestId(apiRequestId);
+              result.setData(data);
+              // 翻译错误码
+              if (codeMapping != null) {
+                  ErrorCode errorCode = codeMapping.apply(apiCode);
+                  if (errorCode == null) {
+                      errorCode = SmsFrameworkErrorCodeConstants.SMS_UNKNOWN;
+                  }
+                  result.setCode(errorCode.getCode()).setMsg(errorCode.getMsg());
+              }
+              return result;
+          }
+      ```
+   5. SmsCommonResult#build的使用
+      
+      ![](.image/SmsCommonResul之bulid方法的使用.png)
+      - 全是在向短信平台api发送请求时使用,用于封装请求结果
+2. 短信管理数据库模型
+   
+   ![](.image/ruoyi-vue-pro-短信管理.png)
+   - system_sms_code:用于验证码的生成和校验
+   
+3. 增加短信登录的功能

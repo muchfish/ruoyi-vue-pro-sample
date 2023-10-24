@@ -24,6 +24,8 @@
 
         <module>yudao-spring-boot-starter-biz-operatelog</module>
         <module>yudao-spring-boot-starter-biz-dict</module>
+        <module>yudao-spring-boot-starter-biz-sms</module>
+
         <module>yudao-spring-boot-starter-biz-tenant</module>
         <module>yudao-spring-boot-starter-biz-error-code</module>
         <module>yudao-spring-boot-starter-biz-ip</module>
