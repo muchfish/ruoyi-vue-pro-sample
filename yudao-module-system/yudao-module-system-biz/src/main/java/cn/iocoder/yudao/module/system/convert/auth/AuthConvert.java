@@ -3,9 +3,11 @@ package cn.iocoder.yudao.module.system.convert.auth;
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeSendReqDTO;
 import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthPermissionInfoRespVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsLoginReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsSendReqVO;
+import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
@@ -25,6 +27,7 @@ public interface AuthConvert {
 
     AuthConvert INSTANCE = Mappers.getMapper(AuthConvert.class);
 
+    AuthLoginRespVO convert(OAuth2AccessTokenDO bean);
 
     default AuthPermissionInfoRespVO convert(AdminUserDO user, List<RoleDO> roleList, List<MenuDO> menuList) {
         return AuthPermissionInfoRespVO.builder()

@@ -1,15 +1,10 @@
 package cn.iocoder.yudao.module.system.service.auth;
 
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
 import cn.iocoder.yudao.framework.common.util.validation.ValidationUtils;
-import cn.iocoder.yudao.framework.redis.core.utils.RedisUtil;
-import cn.iocoder.yudao.framework.security.core.LoginUser;
-import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
-import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.system.api.logger.dto.LoginLogCreateReqDTO;
 import cn.iocoder.yudao.module.system.api.sms.SmsCodeApi;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginReqVO;
@@ -17,12 +12,16 @@ import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsLoginReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsSendReqVO;
 import cn.iocoder.yudao.module.system.convert.auth.AuthConvert;
+import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.enums.logger.LoginLogTypeEnum;
 import cn.iocoder.yudao.module.system.enums.logger.LoginResultEnum;
+import cn.iocoder.yudao.module.system.enums.oauth2.OAuth2ClientConstants;
 import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
 import cn.iocoder.yudao.module.system.service.logger.LoginLogService;
+import cn.iocoder.yudao.module.system.service.oauth2.OAuth2TokenService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+import com.google.common.annotations.VisibleForTesting;
 import com.xingyuv.captcha.model.common.ResponseModel;
 import com.xingyuv.captcha.model.vo.CaptchaVO;
 import com.xingyuv.captcha.service.CaptchaService;
@@ -32,7 +31,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.validation.Validator;
-
 import java.util.Objects;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
@@ -52,6 +50,8 @@ public class AdminAuthServiceImpl implements AdminAuthService {
     private AdminUserService userService;
     @Resource
     private LoginLogService loginLogService;
+    @Resource
+    private OAuth2TokenService oauth2TokenService;
     @Resource
     private Validator validator;
     @Resource
@@ -79,7 +79,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
             throw exception(AUTH_LOGIN_BAD_CREDENTIALS);
         }
         // 校验是否禁用
-        if (ObjectUtil.notEqual(user.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
+        if (CommonStatusEnum.isDisable(user.getStatus())) {
             createLoginLog(user.getId(), username, logTypeEnum, LoginResultEnum.USER_DISABLED);
             throw exception(AUTH_LOGIN_USER_DISABLED);
         }
@@ -142,7 +142,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         }
     }
 
-
+    @VisibleForTesting
     void validateCaptcha(AuthLoginReqVO reqVO) {
         // 如果验证码关闭，则不进行校验
         if (!captchaEnable) {
@@ -164,24 +164,28 @@ public class AdminAuthServiceImpl implements AdminAuthService {
     private AuthLoginRespVO createTokenAfterLoginSuccess(Long userId, String username, LoginLogTypeEnum logType) {
         // 插入登陆日志
         createLoginLog(userId, username, logType, LoginResultEnum.SUCCESS);
-        String token = IdUtil.fastSimpleUUID();
-        //缓存登录信息
-        LoginUser loginUser = new LoginUser().setId(userId).setUserType(getUserType().getValue()).setTenantId(TenantContextHolder.getTenantId());// 手动设置租户编号，避免缓存到 Redis 的时候，无对应的租户编号
-        RedisUtil.set(token, loginUser);
+        // 创建访问令牌
+        OAuth2AccessTokenDO accessTokenDO = oauth2TokenService.createAccessToken(userId, getUserType().getValue(),
+                OAuth2ClientConstants.CLIENT_ID_DEFAULT, null);
         // 构建返回结果
-        return new AuthLoginRespVO().setUserId(userId).setAccessToken(token);
+        return AuthConvert.INSTANCE.convert(accessTokenDO);
     }
 
+    @Override
+    public AuthLoginRespVO refreshToken(String refreshToken) {
+        OAuth2AccessTokenDO accessTokenDO = oauth2TokenService.refreshAccessToken(refreshToken, OAuth2ClientConstants.CLIENT_ID_DEFAULT);
+        return AuthConvert.INSTANCE.convert(accessTokenDO);
+    }
 
     @Override
     public void logout(String token, Integer logType) {
-        LoginUser loginUser = SecurityFrameworkUtils.getLoginUser();
-        //删除登录信息
-        RedisUtil.del(token);
-        // 删除成功，则记录登出日志
-        if (loginUser != null) {
-            createLogoutLog(loginUser.getId(), loginUser.getUserType(), logType);
+        // 删除访问令牌
+        OAuth2AccessTokenDO accessTokenDO = oauth2TokenService.removeAccessToken(token);
+        if (accessTokenDO == null) {
+            return;
         }
+        // 删除成功，则记录登出日志
+        createLogoutLog(accessTokenDO.getUserId(), accessTokenDO.getUserType(), logType);
     }
 
     private void createLogoutLog(Long userId, Integer userType, Integer logType) {
@@ -200,6 +204,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         reqDTO.setResult(LoginResultEnum.SUCCESS.getResult());
         loginLogService.createLoginLog(reqDTO);
     }
+
     private String getUsername(Long userId) {
         if (userId == null) {
             return null;
@@ -207,6 +212,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         AdminUserDO user = userService.getUser(userId);
         return user != null ? user.getUsername() : null;
     }
+
     private UserTypeEnum getUserType() {
         return UserTypeEnum.ADMIN;
     }

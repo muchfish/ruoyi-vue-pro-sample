@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.dal.redis;
 
+import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
+
 /**
  * System Redis Key 枚举类
  *
@@ -47,6 +49,23 @@ public interface RedisKeyConstants {
      */
     String PERMISSION_MENU_ID_LIST = "permission_menu_ids";
 
+    /**
+     * OAuth2 客户端的缓存
+     * <p>
+     * KEY 格式：user:{id}
+     * VALUE 数据类型：String 客户端信息
+     */
+    String OAUTH_CLIENT = "oauth_client";
+
+    /**
+     * 访问令牌的缓存
+     * <p>
+     * KEY 格式：oauth2_access_token:{token}
+     * VALUE 数据类型：String 访问令牌信息 {@link OAuth2AccessTokenDO}
+     * <p>
+     * 由于动态过期时间，使用 RedisTemplate 操作
+     */
+    String OAUTH2_ACCESS_TOKEN = "oauth2_access_token:%s";
 
     /**
      * 站内信模版的缓存

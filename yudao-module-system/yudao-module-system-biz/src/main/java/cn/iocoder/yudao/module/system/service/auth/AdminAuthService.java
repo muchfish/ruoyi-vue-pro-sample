@@ -1,9 +1,6 @@
 package cn.iocoder.yudao.module.system.service.auth;
 
-import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthLoginRespVO;
-import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsLoginReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.auth.vo.AuthSmsSendReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.auth.vo.*;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 
 import javax.validation.Valid;
@@ -56,4 +53,13 @@ public interface AdminAuthService {
      * @return 登录结果
      */
     AuthLoginRespVO smsLogin(AuthSmsLoginReqVO reqVO) ;
+
+    /**
+     * 刷新访问令牌
+     *
+     * @param refreshToken 刷新令牌
+     * @return 登录结果
+     */
+    AuthLoginRespVO refreshToken(String refreshToken);
+
 }

@@ -1399,3 +1399,166 @@
 
 #### 用户个人信息
 1. 用户个人信息crud(todo :头像修改)
+
+
+#### OAuth 2.0-应用/令牌管理和使用AccessToken与RefreshToken进行登录
+1. 数据库模型
+
+   ![](.image/ruoyi-vue-pro-OAuth%202.0-01.png)
+   - system_oauth2_client:OAuth2 客户端表,控制令牌的有效期和权限范围等
+   - system_oauth2_access_token:OAuth2 访问令牌,用于访问系统的令牌
+   - system_oauth2_refresh_token:OAuth2 刷新令牌,用于刷新访问令牌.正常情况,刷新令牌有效期大于访问令牌
+
+2. AUTH模块使用AccessToken与RefreshToken
+   1. 登录接口登录成功放回AccessToken与RefreshToken
+
+   2. 提供刷新令牌接口,用于生成新的访问令牌
+
+      > **使用AccessToken与RefreshToken的优缺点**
+      >
+      > AccessToken（访问令牌）和RefreshToken（刷新令牌）是OAuth 2.0授权框架中的两个重要概念，用于安全地授权第三方应用程序访问用户的资源。它们各自有一些优点和缺点，具体取决于应用程序的需求和安全要求。以下是它们的主要优缺点：
+      >
+      > AccessToken的优点：
+      > 1. 临时性：AccessToken是一种短期令牌，通常在较短的时间内失效，这有助于降低潜在风险，因为即使AccessToken被泄露，攻击者也只能在有限的时间内滥用它。
+      > 2. 更轻量级：AccessToken通常比RefreshToken更轻量级，因为它只包含有限的信息，例如授权范围和持有者的信息。
+      > 3. 增加性能：由于AccessToken的寿命较短，它们通常更容易生成和验证，这可以提高性能，尤其是在高负载情况下。
+      >
+      > AccessToken的缺点：
+      > 1. 用户体验：因为AccessToken是有限期的，用户可能需要频繁重新授权，这可能对用户体验产生负面影响。
+      > 2. 安全性：AccessToken可能容易被截获或泄露，因此需要额外的安全措施来保护它们，例如HTTPS通信。
+      >
+      > RefreshToken的优点：
+      > 1. 持久性：RefreshToken具有较长的有效期，通常可以用于更长时间，以保持用户的持续授权状态，而无需频繁登录或重新授权。
+      > 2. 安全性：因为RefreshToken的有效期较长，它们通常存储在更安全的环境中，例如服务器端，减少了泄露的风险。
+      > 3. 减少用户干预：RefreshToken可以减少用户干预的需求，因为用户不必频繁登录或重新授权。
+      >
+      > RefreshToken的缺点：
+      > 1. 长期风险：由于RefreshToken的有效期较长，如果它们被盗或泄露，攻击者有更多时间滥用授权，因此需要更强的安全措施来保护它们。
+      > 2. 复杂性：使用RefreshToken需要更复杂的流程，包括定期刷新AccessToken，这可能需要额外的开发工作和维护。
+      >
+      > 最佳实践通常是在应用程序中同时使用AccessToken和RefreshToken，以平衡用户体验和安全性。AccessToken用于实际的资源访问，而RefreshToken用于在AccessToken到期时获取新的AccessToken。同时，应该采取适当的安全措施，以防止令牌泄露和滥用。
+
+3. starter-security功能完善
+   1. 自定义AccessDeniedHandler处理spring security拦截到权限不足的情况.返回自定义权限不足错误码.[AccessDeniedHandlerImpl.java](yudao-framework%2Fyudao-spring-boot-starter-security%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fsecurity%2Fcore%2Fhandler%2FAccessDeniedHandlerImpl.java)
+   
+   2. TokenAuthenticationFilter中增加校验访问令牌的逻辑
+   
+   3. [TransmittableThreadLocalSecurityContextHolderStrategy.java](yudao-framework%2Fyudao-spring-boot-starter-security%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fsecurity%2Fcore%2Fcontext%2FTransmittableThreadLocalSecurityContextHolderStrategy.java)
+      1. 基于 TransmittableThreadLocal 实现的 Security Context 持有者策略 目的是，避免 @Async 等异步执行时，原生 ThreadLocal 的丢失问题
+      - `SecurityContextHolderStrategy`:用于管理和维护关于安全性的上下文信息，例如当前认证的用户和用户的权限。
+      - `TransmittableThreadLocal`:允许在不同线程之间传递这些上下文信息，同时保持线程隔离。
+      - `SecurityContextImpl`:Spring Security 上下文对象.
+        1. 存储认证信息
+        2. 存储权限信息
+        3. 提供方法来获取和设置安全上下文
+   
+   4. 设置使用 `TransmittableThreadLocalSecurityContextHolderStrategy` 作为 Security 的上下文策略
+   
+      ```java
+          /**
+           * 声明调用 {@link SecurityContextHolder#setStrategyName(String)} 方法，
+           * 设置使用 {@link TransmittableThreadLocalSecurityContextHolderStrategy} 作为 Security 的上下文策略
+           */
+          @Bean
+          public MethodInvokingFactoryBean securityContextHolderMethodInvokingFactoryBean() {
+              MethodInvokingFactoryBean methodInvokingFactoryBean = new MethodInvokingFactoryBean();
+              methodInvokingFactoryBean.setTargetClass(SecurityContextHolder.class);
+              methodInvokingFactoryBean.setTargetMethod("setStrategyName");
+              methodInvokingFactoryBean.setArguments(TransmittableThreadLocalSecurityContextHolderStrategy.class.getName());
+              return methodInvokingFactoryBean;
+          }
+      ```
+   
+      - `MethodInvokingFactoryBean`:
+   
+        `MethodInvokingFactoryBean` 是 Spring Framework 中的一个工厂 bean，用于执行一个特定的静态方法或非静态方法，并将其结果暴露为一个 bean。它的作用是将方法的执行结果装配成一个 Spring bean，使方法的结果可以在应用程序中像其他 bean 一样进行管理和注入。
+   
+        主要用途和功能包括：
+   
+        1. 调用静态方法：`MethodInvokingFactoryBean` 可以用于调用静态方法，这些方法通常不需要特定的实例，而是通过类名调用。
+   
+        2. 调用实例方法：除了静态方法，它还可以调用实例方法，但在这种情况下，需要提供目标对象（通常是某个已存在的 bean）以及方法名。
+   
+        3. 调用工厂方法：它还可以用于调用工厂方法，以便将方法的结果作为 bean 创建并管理。
+   
+        4. 通过 Spring 配置装配结果：`MethodInvokingFactoryBean` 允许你将方法调用的结果装配为一个 Spring bean，并将其配置到 Spring 容器中，以便其他 bean 可以引用它。
+   
+        示例使用方法：
+   
+        ```xml
+        <bean id="myService" class="com.example.MyService" />
+        
+        <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+            <property name="targetObject" ref="myService" />
+            <property name="targetMethod" value="doSomething" />
+        </bean>
+        ```
+   
+        上面的示例中，`MethodInvokingFactoryBean` 调用了 `myService` 对象的 `doSomething` 方法，然后将方法的结果装配为一个 bean，并可以像其他 bean 一样在应用程序中使用。
+   
+        需要注意的是，`MethodInvokingFactoryBean` 通常用于配置阶段，而不是在运行时执行方法调用。它适用于需要在 Spring 配置文件中执行某些操作，如初始化配置或调用工厂方法的情况。如果需要在运行时动态调用方法，通常会使用 AOP 或编程方式实现。
+   
+        总之，`MethodInvokingFactoryBean` 是 Spring Framework 中的一个用于执行方法调用并将结果装配为 Spring bean 的工厂 bean，通常用于配置阶段，以执行各种初始化、配置和工厂方法的调用。
+   
+        > (方法结果为void怎么封装成bean,还是本例中`setStrategyName`为静态方法,不需要封装成bean,`setStrategyName`方法被调用了即可达成目标)
+        >
+        > 本例中`setStrategyName方法被调用了即可达成目标`
+        >
+        > 原因如下:`setStrategyName`方法最终会通过反射创建出自定义的策略对象,并赋值给`SecurityContextHolder`的静态成员变量`strategy`
+        >
+        > ```java
+        > 	public static void setStrategyName(String strategyName) {
+        > 		SecurityContextHolder.strategyName = strategyName;
+        > 		initialize();
+        > 	}
+        > ```
+        >
+        > ```java
+        > 	private static void initialize() {
+        > 		initializeStrategy();
+        > 		initializeCount++;
+        > 	}
+        > ```
+        >
+        > ```java
+        > 	private static void initializeStrategy() {
+        > 		//此处省略一些默认策略处理的代码
+        > 		// Try to load a custom strategy
+        > 		try {
+        > 			Class<?> clazz = Class.forName(strategyName);
+        > 			Constructor<?> customStrategy = clazz.getConstructor();
+        > 			strategy = (SecurityContextHolderStrategy) customStrategy.newInstance();
+        > 		}
+        > 		catch (Exception ex) {
+        > 			ReflectionUtils.handleReflectionException(ex);
+        > 		}
+        > 	}
+        > ```
+        >
+        > 
+   
+      - `SecurityContextHolder#setStrategyName`:
+   
+        `SecurityContextHolder` 类的 `setStrategyName` 方法是 Spring Security 中的一个重要方法，用于设置安全上下文（`SecurityContext`）的策略名称（`strategyName`）。该方法的作用是告诉 Spring Security 如何管理和维护安全上下文，以适应不同的环境和需求。
+   
+        安全上下文策略名称是一个标识，它表示了 Spring Security 在多线程环境中如何处理安全上下文的传递。不同的策略名称可以对应不同的策略实现，以满足特定的需求。在 Spring Security 中，有几种不同的策略可供选择，例如：
+   
+        1. `MODE_THREADLOCAL`：这是默认策略，安全上下文信息存储在线程本地变量中，每个线程拥有自己的安全上下文。这意味着安全上下文在不同线程之间不共享，适用于多线程环境。
+   
+        2. `MODE_GLOBAL`：这种策略允许安全上下文在全局范围内共享，通常用于单线程应用程序或者不需要多线程安全的应用程序。
+   
+        3. 自定义策略：除了上述两种标准策略，Spring Security还允许开发人员定义自己的安全上下文策略，以满足特定需求。
+   
+        `setStrategyName` 方法的调用将影响整个应用程序中的安全上下文管理。在多线程应用程序中，通常会选择 `MODE_THREADLOCAL` 策略，以确保安全上下文的线程隔离。当你在 Spring Security 配置中调用 `setStrategyName` 方法时，Spring Security将根据提供的策略名称使用相应的策略实现来管理安全上下文。
+   
+        示例使用方法：
+   
+        ```java
+        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_THREADLOCAL);
+        ```
+   
+        上面的示例将安全上下文策略设置为 `MODE_THREADLOCAL`，这是在多线程环境中通常使用的默认策略。
+   
+        总之，`SecurityContextHolder` 的 `setStrategyName` 方法用于设置 Spring Security 的安全上下文策略，以控制如何管理和维护安全上下文。选择适当的策略取决于你的应用程序需求，特别是在多线程环境中确保安全上下文的正确传递和隔离。
+   
+      

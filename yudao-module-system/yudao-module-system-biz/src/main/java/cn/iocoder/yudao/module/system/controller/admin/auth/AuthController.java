@@ -18,6 +18,7 @@ import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -76,6 +77,15 @@ public class AuthController {
         return success(true);
     }
 
+
+    @PostMapping("/refresh-token")
+    @LoginFree
+    @Operation(summary = "刷新令牌")
+    @Parameter(name = "refreshToken", description = "刷新令牌", required = true)
+    @OperateLog(enable = false) // 避免 Post 请求被记录操作日志
+    public CommonResult<AuthLoginRespVO> refreshToken(@RequestParam("refreshToken") String refreshToken) {
+        return success(authService.refreshToken(refreshToken));
+    }
 
     @GetMapping("/get-permission-info")
     @Operation(summary = "获取登录用户的权限信息")

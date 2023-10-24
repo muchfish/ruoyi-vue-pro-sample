@@ -3,6 +3,7 @@ package cn.iocoder.yudao.framework.security.config;
 import cn.iocoder.yudao.framework.security.core.annotation.Authenticated;
 import cn.iocoder.yudao.framework.security.core.annotation.LoginFree;
 import cn.iocoder.yudao.framework.security.core.filter.TokenAuthenticationFilter;
+import cn.iocoder.yudao.framework.web.config.WebProperties;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -21,6 +23,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,7 +41,11 @@ public class YudaoWebSecurityConfigurerAdapter {
      */
     @Resource
     private AuthenticationEntryPoint authenticationEntryPoint;
-
+    /**
+     * 权限不够处理器 Bean
+     */
+    @Resource
+    private AccessDeniedHandler accessDeniedHandler;
     /**
      * Token 认证过滤器 Bean
      */
@@ -78,7 +85,9 @@ public class YudaoWebSecurityConfigurerAdapter {
         httpSecurity
                 // CSRF 禁用
                 .csrf().disable()
+                // 一堆自定义的 Spring Security 处理器
                 .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler);
         ;
         // 设置每个请求的权限
         httpSecurity
