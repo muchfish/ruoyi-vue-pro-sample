@@ -1,16 +1,16 @@
 package cn.iocoder.yudao.module.system.service.user;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 
 import javax.validation.Valid;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * 后台用户 Service 接口
@@ -41,6 +41,22 @@ public interface AdminUserService {
      * @param loginIp 登陆 IP
      */
     void updateUserLogin(Long id, String loginIp);
+
+    /**
+     * 修改用户个人信息
+     *
+     * @param id 用户编号
+     * @param reqVO 用户个人信息
+     */
+    void updateUserProfile(Long id, @Valid UserProfileUpdateReqVO reqVO);
+
+    /**
+     * 修改用户个人密码
+     *
+     * @param id 用户编号
+     * @param reqVO 更新用户个人密码
+     */
+    void updateUserPassword(Long id, @Valid UserProfileUpdatePasswordReqVO reqVO);
 
     /**
      * 修改密码

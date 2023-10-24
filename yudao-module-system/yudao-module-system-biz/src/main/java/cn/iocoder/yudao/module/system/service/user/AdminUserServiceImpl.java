@@ -7,6 +7,8 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
 import cn.iocoder.yudao.module.system.convert.user.UserConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
@@ -127,6 +129,25 @@ public class AdminUserServiceImpl implements AdminUserService {
         userMapper.updateById(new AdminUserDO().setId(id).setLoginIp(loginIp).setLoginDate(LocalDateTime.now()));
     }
 
+    @Override
+    public void updateUserProfile(Long id, UserProfileUpdateReqVO reqVO) {
+        // 校验正确性
+        validateUserExists(id);
+        validateEmailUnique(id, reqVO.getEmail());
+        validateMobileUnique(id, reqVO.getMobile());
+        // 执行更新
+        userMapper.updateById(UserConvert.INSTANCE.convert(reqVO).setId(id));
+    }
+
+    @Override
+    public void updateUserPassword(Long id, UserProfileUpdatePasswordReqVO reqVO) {
+        // 校验旧密码密码
+        validateOldPassword(id, reqVO.getOldPassword());
+        // 执行更新
+        AdminUserDO updateObj = new AdminUserDO().setId(id);
+        updateObj.setPassword(encodePassword(reqVO.getNewPassword())); // 加密密码
+        userMapper.updateById(updateObj);
+    }
 
     @Override
     public void updateUserPassword(Long id, String password) {
