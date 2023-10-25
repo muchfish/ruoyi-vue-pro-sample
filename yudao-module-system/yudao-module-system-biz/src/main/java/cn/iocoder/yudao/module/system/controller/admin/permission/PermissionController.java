@@ -2,18 +2,20 @@ package cn.iocoder.yudao.module.system.controller.admin.permission;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleDataScopeReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleMenuReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignUserRoleReqVO;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.Set;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
@@ -53,7 +55,15 @@ public class PermissionController {
         return success(true);
     }
 
-    @Operation(summary = "获得用户拥有的角色编号列表")
+    @PostMapping("/assign-role-data-scope")
+    @Operation(summary = "赋予角色数据权限")
+    @PreAuthorize("@ss.hasPermission('system:permission:assign-role-data-scope')")
+    public CommonResult<Boolean> assignRoleDataScope(@Valid @RequestBody PermissionAssignRoleDataScopeReqVO reqVO) {
+        permissionService.assignRoleDataScope(reqVO.getRoleId(), reqVO.getDataScope(), reqVO.getDataScopeDeptIds());
+        return success(true);
+    }
+
+    @Operation(summary = "获得管理员拥有的角色编号列表")
     @Parameter(name = "userId", description = "用户编号", required = true)
     @GetMapping("/list-user-roles")
     @PreAuthorize("@ss.hasPermission('system:permission:assign-user-role')")

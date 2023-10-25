@@ -109,6 +109,13 @@ public class CollectionUtils {
         return valueFunc.apply(t);
     }
 
+    public static <T> void addIfNotNull(Collection<T> coll, T item) {
+        if (item == null) {
+            return;
+        }
+        coll.add(item);
+    }
+
     public static <T> Collection<T> singleton(T deptId) {
         return deptId == null ? Collections.emptyList() : Collections.singleton(deptId);
     }

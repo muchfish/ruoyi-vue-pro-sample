@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -25,12 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
@@ -87,6 +87,19 @@ public class RoleServiceImpl implements RoleService {
         roleMapper.updateById(updateObj);
     }
 
+    @Override
+    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
+    public void updateRoleDataScope(Long id, Integer dataScope, Set<Long> dataScopeDeptIds) {
+        // 校验是否可以更新
+        validateRoleForUpdate(id);
+
+        // 更新数据范围
+        RoleDO updateObject = new RoleDO();
+        updateObject.setId(id);
+        updateObject.setDataScope(dataScope);
+        updateObject.setDataScopeDeptIds(dataScopeDeptIds);
+        roleMapper.updateById(updateObject);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -212,7 +225,25 @@ public class RoleServiceImpl implements RoleService {
         });
     }
 
-
+    @Override
+    public void validateRoleList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        // 获得角色信息
+        List<RoleDO> roles = roleMapper.selectBatchIds(ids);
+        Map<Long, RoleDO> roleMap = convertMap(roles, RoleDO::getId);
+        // 校验
+        ids.forEach(id -> {
+            RoleDO role = roleMap.get(id);
+            if (role == null) {
+                throw exception(ROLE_NOT_EXISTS);
+            }
+            if (!CommonStatusEnum.ENABLE.getStatus().equals(role.getStatus())) {
+                throw exception(ROLE_IS_DISABLE, role.getName());
+            }
+        });
+    }
 
     /**
      * 获得自身的代理对象，解决 AOP 生效问题

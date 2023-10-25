@@ -6,6 +6,8 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
+import cn.iocoder.yudao.module.system.api.permission.dto.DeptDataPermissionRespDTO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleMenuDO;
@@ -13,8 +15,12 @@ import cn.iocoder.yudao.module.system.dal.dataobject.permission.UserRoleDO;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.RoleMenuMapper;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.UserRoleMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
+import cn.iocoder.yudao.module.system.enums.permission.DataScopeEnum;
+import cn.iocoder.yudao.module.system.service.dept.DeptService;
+import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -24,12 +30,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
 
 /**
  * 权限 Service 实现类
@@ -49,6 +54,10 @@ public class PermissionServiceImpl implements PermissionService {
     private RoleService roleService;
     @Resource
     private MenuService menuService;
+    @Resource
+    private DeptService deptService;
+    @Resource
+    private AdminUserService userService;
 
     @Override
     public boolean hasAnyPermissions(Long userId, String... permissions) {
@@ -229,7 +238,10 @@ public class PermissionServiceImpl implements PermissionService {
         return getUserRoleIdListByUserId(userId);
     }
 
-
+    @Override
+    public Set<Long> getUserRoleIdListByRoleId(Collection<Long> roleIds) {
+        return convertSet(userRoleMapper.selectListByRoleIds(roleIds), UserRoleDO::getUserId);
+    }
 
     /**
      * 获得用户拥有的角色，并且这些角色是开启状态的
@@ -248,6 +260,69 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     // ========== 用户-部门的相关方法  ==========
+
+    @Override
+    public void assignRoleDataScope(Long roleId, Integer dataScope, Set<Long> dataScopeDeptIds) {
+        roleService.updateRoleDataScope(roleId, dataScope, dataScopeDeptIds);
+    }
+
+    @Override
+    @DataPermission(enable = false) // 关闭数据权限，不然就会出现递归获取数据权限的问题
+    public DeptDataPermissionRespDTO getDeptDataPermission(Long userId) {
+        // 获得用户的角色
+        List<RoleDO> roles = getEnableUserRoleListByUserIdFromCache(userId);
+
+        // 如果角色为空，则只能查看自己
+        DeptDataPermissionRespDTO result = new DeptDataPermissionRespDTO();
+        if (CollUtil.isEmpty(roles)) {
+            result.setSelf(true);
+            return result;
+        }
+
+        // 获得用户的部门编号的缓存，通过 Guava 的 Suppliers 惰性求值，即有且仅有第一次发起 DB 的查询
+        Supplier<Long> userDeptId = Suppliers.memoize(() -> userService.getUser(userId).getDeptId());
+        // 遍历每个角色，计算
+        for (RoleDO role : roles) {
+            // 为空时，跳过
+            if (role.getDataScope() == null) {
+                continue;
+            }
+            // 情况一，ALL
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.ALL.getScope())) {
+                result.setAll(true);
+                continue;
+            }
+            // 情况二，DEPT_CUSTOM
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.DEPT_CUSTOM.getScope())) {
+                CollUtil.addAll(result.getDeptIds(), role.getDataScopeDeptIds());
+                // 自定义可见部门时，保证可以看到自己所在的部门。否则，一些场景下可能会有问题。
+                // 例如说，登录时，基于 t_user 的 username 查询会可能被 dept_id 过滤掉
+                CollUtil.addAll(result.getDeptIds(), userDeptId.get());
+                continue;
+            }
+            // 情况三，DEPT_ONLY
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.DEPT_ONLY.getScope())) {
+                CollectionUtils.addIfNotNull(result.getDeptIds(), userDeptId.get());
+                continue;
+            }
+            // 情况四，DEPT_DEPT_AND_CHILD
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.DEPT_AND_CHILD.getScope())) {
+                CollUtil.addAll(result.getDeptIds(), deptService.getChildDeptIdListFromCache(userDeptId.get()));
+                // 添加本身部门编号
+                CollUtil.addAll(result.getDeptIds(), userDeptId.get());
+                continue;
+            }
+            // 情况五，SELF
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.SELF.getScope())) {
+                result.setSelf(true);
+                continue;
+            }
+            // 未知情况，error log 即可
+            log.error("[getDeptDataPermission][LoginUser({}) role({}) 无法处理]", userId, toJsonString(result));
+        }
+        return result;
+    }
+
     /**
      * 获得自身的代理对象，解决 AOP 生效问题
      *

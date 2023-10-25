@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import cn.iocoder.yudao.module.system.api.permission.dto.DeptDataPermissionRespDTO;
+
 import java.util.Collection;
 import java.util.Set;
 
@@ -98,6 +100,13 @@ public interface PermissionService {
      */
     void processUserDeleted(Long userId);
 
+    /**
+     * 获得拥有多个角色的用户编号集合
+     *
+     * @param roleIds 角色编号集合
+     * @return 用户编号集合
+     */
+    Set<Long> getUserRoleIdListByRoleId(Collection<Long> roleIds);
 
     /**
      * 获得用户拥有的角色编号集合
@@ -117,5 +126,21 @@ public interface PermissionService {
 
     // ========== 用户-部门的相关方法  ==========
 
+    /**
+     * 设置角色的数据权限
+     *
+     * @param roleId           角色编号
+     * @param dataScope        数据范围
+     * @param dataScopeDeptIds 部门编号数组
+     */
+    void assignRoleDataScope(Long roleId, Integer dataScope, Set<Long> dataScopeDeptIds);
+
+    /**
+     * 获得登陆用户的部门数据权限
+     *
+     * @param userId 用户编号
+     * @return 部门数据权限
+     */
+    DeptDataPermissionRespDTO getDeptDataPermission(Long userId);
 
 }

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.dept;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptCreateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptListReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptUpdateReqVO;
@@ -14,6 +15,7 @@ import cn.iocoder.yudao.module.system.enums.dept.DeptIdEnum;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -173,7 +175,13 @@ public class DeptServiceImpl implements DeptService {
         return children;
     }
 
-
+    @Override
+    @DataPermission(enable = false) // 禁用数据权限，避免建立不正确的缓存
+    @Cacheable(cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST, key = "#id")
+    public Set<Long> getChildDeptIdListFromCache(Long id) {
+        List<DeptDO> children = getChildDeptList(id);
+        return convertSet(children, DeptDO::getId);
+    }
 
     @Override
     public void validateDeptList(Collection<Long> ids) {

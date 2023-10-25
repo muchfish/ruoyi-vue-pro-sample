@@ -2,11 +2,13 @@ package cn.iocoder.yudao.module.system.service.user;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import cn.iocoder.yudao.framework.datapermission.core.util.DataPermissionUtils;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -240,18 +243,21 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private void validateUserForCreateOrUpdate(Long id, String username, String mobile, String email,
                                                Long deptId, Set<Long> postIds) {
-        // 校验用户存在
-        validateUserExists(id);
-        // 校验用户名唯一
-        validateUsernameUnique(id, username);
-        // 校验手机号唯一
-        validateMobileUnique(id, mobile);
-        // 校验邮箱唯一
-        validateEmailUnique(id, email);
-        // 校验部门处于开启状态
-        deptService.validateDeptList(CollectionUtils.singleton(deptId));
-        // 校验岗位处于开启状态
-        postService.validatePostList(postIds);
+        // 关闭数据权限，避免因为没有数据权限，查询不到数据，进而导致唯一校验不正确
+        DataPermissionUtils.executeIgnore(() -> {
+            // 校验用户存在
+            validateUserExists(id);
+            // 校验用户名唯一
+            validateUsernameUnique(id, username);
+            // 校验手机号唯一
+            validateMobileUnique(id, mobile);
+            // 校验邮箱唯一
+            validateEmailUnique(id, email);
+            // 校验部门处于开启状态
+            deptService.validateDeptList(CollectionUtils.singleton(deptId));
+            // 校验岗位处于开启状态
+            postService.validatePostList(postIds);
+        });
     }
 
     @VisibleForTesting

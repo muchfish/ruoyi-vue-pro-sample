@@ -1795,3 +1795,93 @@
    - `OAuth2GrantService`:授权服务,各种授权模式的实际调用方.提供不同模式下访问令牌、刷新令牌和移除访问令牌的操作
 
 
+
+
+#### 数据权限
+
+1. 实现流程
+
+   1. 在AOP中使用环绕通知,方法执行前获取到所有被`@DataPermission`标注的方法(包括类被标注的方法)
+   2. 将`@DataPermission`的值存入TransmittableThreadLocal中.(会在`DataPermissionRuleFactoryImpl`中取出)
+   3. 切入点方法执行
+   4. `DataPermissionDatabaseInterceptor`执行,拦截sql
+   5. 调用`DataPermissionRuleFactoryImpl`类,取出数据权限的规则
+      1. `DataPermissionRuleFactoryImpl`类中会取出存入TransmittableThreadLocal中的`@DataPermission`,过滤出需要的数据权限的规则
+   6. 处理 SQL.根据权限规则配置条件
+
+2. 自定义该权限规则,构建`DeptDataPermissionRule`.
+
+   ```java
+       @Bean
+       public DeptDataPermissionRule deptDataPermissionRule(PermissionApi permissionApi,
+                                                            List<DeptDataPermissionRuleCustomizer> customizers) {
+           // 创建 DeptDataPermissionRule 对象
+           DeptDataPermissionRule rule = new DeptDataPermissionRule(permissionApi);
+           // 补全表配置
+           customizers.forEach(customizer -> customizer.customize(rule));
+           return rule;
+       }
+   ```
+
+   - 使用@Bean获取到`List<DeptDataPermissionRuleCustomizer> customizers`,`DeptDataPermissionRuleCustomizer`由用户自定义
+   - `customizers.forEach(customizer -> customizer.customize(rule));`:调用customize()方法,使用户自定义的自定义该权限规则应用上
+
+3. AOP相关
+
+   AbstractPointcutAdvisor、Advice、Pointcut和MethodInterceptor都是Spring框架中用于实现面向切面编程（AOP）的重要概念，它们之间有以下关系：
+
+   1. **AbstractPointcutAdvisor**：
+      `AbstractPointcutAdvisor`是Spring AOP中的一个抽象类，用于创建通知（Advice）和切入点（Pointcut）的组合。它是`PointcutAdvisor`接口的一个常见实现。一个`AbstractPointcutAdvisor`通常包括一个Pointcut和一个Advice。它是AOP代理的关键组件，用于定义切面。
+
+   2. **Advice**：
+      `Advice`代表在方法执行的不同切点（例如方法调用前、方法调用后、方法抛出异常等）执行的逻辑。Spring提供了几种类型的Advice，如`BeforeAdvice`、`AfterAdvice`、`AroundAdvice`等。Advice定义了在何时何地执行额外的逻辑，通常与切点结合使用以实现切面功能。Advice可以是普通的Java对象，实现Advice接口或者使用Spring提供的注解。
+
+   3. **Pointcut**：
+      `Pointcut`定义了在哪里（即切点）应该应用Advice。Pointcut用于匹配一组方法，允许你指定哪些方法应该受到AOP增强的影响。Spring提供了不同的Pointcut表达式语言，如AspectJ表达式和Spring的自定义表达式语言，用于定义切点。Pointcut可以与Advice关联，以确定何时以及在哪些方法上应用Advice。
+
+   4. **MethodInterceptor**：
+      `MethodInterceptor`是Spring AOP中的一种拦截器，通常与`AroundAdvice`一起使用。它允许你在方法执行前和方法执行后插入自定义逻辑，以完全控制方法的执行。`MethodInterceptor`通常被用来包装Advice，从而提供更灵活的控制和定制化的AOP行为。
+
+   综合起来，一个`AbstractPointcutAdvisor`包含了Advice和Pointcut的组合，其中Advice定义了增强逻辑，Pointcut定义了在哪些方法上应用这些增强逻辑。`MethodInterceptor`通常与`AroundAdvice`一起使用，以提供在方法执行前和方法执行后插入自定义逻辑的能力。这些组件协同工作，使Spring的AOP能够实现横切关注点的分离和重用。
+
+4. ```java
+   protected Pointcut buildPointcut() {
+           Pointcut classPointcut = new AnnotationMatchingPointcut(DataPermission.class, true);
+           Pointcut methodPointcut = new AnnotationMatchingPointcut(null, DataPermission.class, true);
+           return new ComposablePointcut(classPointcut).union(methodPointcut);
+       }
+   ```
+
+   - 这代码段是一个Java方法，用于构建一个Spring AOP的切点（Pointcut）。让我来逐步解释这段代码：
+
+     1. `AnnotationMatchingPointcut`是Spring AOP提供的一个类，它用于匹配具有特定注解的类或方法。在这里，你正在创建两个`AnnotationMatchingPointcut`实例。
+
+        - `classPointcut`：这是第一个切点，它用于匹配带有 `DataPermission` 注解的类。参数 `DataPermission.class` 表示要匹配的注解类，而 `true` 表示也要匹配子类。这意味着它将匹配包括继承 `DataPermission` 注解的类。
+
+        - `methodPointcut`：这是第二个切点，它用于匹配带有 `DataPermission` 注解的方法。参数 `null` 表示不限制匹配的类，而 `DataPermission.class` 表示要匹配的注解类。同样，`true` 表示也要匹配子类的方法。
+
+     2. 接下来，你使用 `ComposablePointcut` 创建一个可组合的切点，即 `classPointcut` 和 `methodPointcut` 的组合。 `ComposablePointcut` 允许你将多个切点组合在一起，以创建一个更复杂的切点。在这里，使用 `union` 方法将这两个切点组合在一起，表示匹配既有 `DataPermission` 注解的类又有 `DataPermission` 注解的方法。
+
+     3. 最后，`buildPointcut()` 方法返回这个组合后的切点，可以在Spring AOP中用于定义切面，以便在匹配的类和方法上应用相应的增强（Advice）。
+
+     总之，这段代码创建了一个复合切点，用于匹配既带有 `DataPermission` 注解的类又带有 `DataPermission` 注解的方法。这种切点可以用于定义一个切面，以便在相关的类和方法上应用数据权限控制的逻辑。
+
+5. Guava的Suppliers.memoize方法
+
+   `Suppliers.memoize` 方法是 Google Guava 库中的一个方法，用于包装一个 `Supplier` 实例，以便对其进行记忆或缓存，以提高性能。记忆是指当首次调用 `Supplier` 的 `get()` 方法后，`Suppliers.memoize` 会缓存计算结果，并在后续的调用中直接返回缓存的结果，而不会再次计算。
+
+   这个方法通常用于延迟计算，特别是当计算结果是不变的或者很昂贵的时候。通过使用 `Suppliers.memoize`，可以确保一个 `Supplier` 只会计算一次，而后续调用将直接返回缓存的结果。这可以提高性能并减少重复计算的开销。
+
+   下面是 `Suppliers.memoize` 方法的一个简单示例：
+
+   ```java
+   Supplier<String> supplier = Suppliers.memoize(() -> {
+       System.out.println("Calculating...");
+       return "Result";
+   });
+   
+   System.out.println(supplier.get()); // 第一次调用，进行计算
+   System.out.println(supplier.get()); // 后续调用，直接返回缓存的结果
+   ```
+
+   在这个例子中，第一次调用 `supplier.get()` 会进行计算并打印 "Calculating..."，而后续调用会直接返回缓存的结果而不会再次计算。这在某些场景下可以提高程序的性能和效率。

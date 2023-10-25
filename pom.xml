@@ -13,6 +13,7 @@
         <!-- Server 主项目 -->
         <module>yudao-server</module>
         <module>yudao-module-system</module>
+        <module>yudao-framework/yudao-spring-boot-starter-biz-data-permission</module>
 
     </modules>
 
