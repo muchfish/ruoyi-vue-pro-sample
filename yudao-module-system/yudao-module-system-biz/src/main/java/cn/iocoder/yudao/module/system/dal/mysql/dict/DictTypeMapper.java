@@ -9,13 +9,11 @@ import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictTypeDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
-@Component
 public interface DictTypeMapper extends BaseMapperX<DictTypeDO> {
 
     default PageResult<DictTypeDO> selectPage(DictTypePageReqVO reqVO) {

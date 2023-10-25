@@ -1561,4 +1561,237 @@
    
         总之，`SecurityContextHolder` 的 `setStrategyName` 方法用于设置 Spring Security 的安全上下文策略，以控制如何管理和维护安全上下文。选择适当的策略取决于你的应用程序需求，特别是在多线程环境中确保安全上下文的正确传递和隔离。
    
-      
+
+
+
+#### OAuth 2.0各种授权模式的SSO 单点登录
+
+1. OAuth 2.0 授权模式
+
+   ![](.image/OAuth%202.0%20授权模式实现架构图.png)
+   - 授权码模式
+   - 简化模式
+   - 密码模式
+   - 客户端模式
+
+2. 基于授权码模式，实现 SSO 单点登录[yudao-sso-demo-by-code](yudao-example%2Fyudao-sso-demo-by-code)
+
+   ![](.image/授权码模式的单点登录.png)
+   - 重定向通过前端`location.href`实现.(授权完成后,服务端返回重定向地址)
+
+3. 基于密码模式，实现 SSO 登录[yudao-sso-demo-by-password](yudao-example%2Fyudao-sso-demo-by-password)
+
+   ![](.image/密码模式的单点登录.png)
+
+4. OAuth 2.0数据库模型
+
+   ![](.image/ruoyi-vue-pro-OAuth%202.0.png)
+   - `scopes`:授权范围.由`system_oauth2_client`开始往后传递
+   - `system_oauth2_approve`:OAuth2 批准表,用于授权码模式,记录用户的授权范围
+   - `system_oauth2_code`:OAuth2 授权码表,由yudao服务生成,code使用一次后就销毁
+
+5. `SecurityFrameworkService`类增加`hasScope`方法,用于OAuth 2.0中授权范围权限的判断
+
+6. 接口设计
+
+   ```java
+   /**
+    * OAuth2 批准 Service 接口
+    *
+    * 从功能上，和 Spring Security OAuth 的 ApprovalStoreUserApprovalHandler 的功能，记录用户针对指定客户端的授权，减少手动确定。
+    *
+    * @author 芋道源码
+    */
+   public interface OAuth2ApproveService {
+   
+       /**
+        * (不知道干嘛的)
+        * 获得指定用户，针对指定客户端的指定授权，是否通过
+        *
+        * 参考 ApprovalStoreUserApprovalHandler 的 checkForPreApproval 方法
+        *
+        * @param userId 用户编号
+        * @param userType 用户类型
+        * @param clientId 客户端编号
+        * @param requestedScopes 授权范围
+        * @return 是否授权通过
+        */
+       boolean checkForPreApproval(Long userId, Integer userType, String clientId, Collection<String> requestedScopes);
+   
+       /**
+        * (授权码模式中,用户批准授权使用)
+        * 在用户发起批准时，基于 scopes 的选项，计算最终是否通过
+        *
+        * @param userId 用户编号
+        * @param userType 用户类型
+        * @param clientId 客户端编号
+        * @param requestedScopes 授权范围
+        * @return 是否授权通过
+        */
+       boolean updateAfterApproval(Long userId, Integer userType, String clientId, Map<String, Boolean> requestedScopes);
+   
+       /**
+        * (授权码模式中,查询用户已批准的授权)
+        * 获得用户的批准列表，排除已过期的
+        *
+        * @param userId 用户编号
+        * @param userType 用户类型
+        * @param clientId 客户端编号
+        * @return 是否授权通过
+        */
+       List<OAuth2ApproveDO> getApproveList(Long userId, Integer userType, String clientId);
+   
+   }
+   ```
+
+   ```java
+   /**
+    * OAuth2.0 授权码 Service 接口
+    *
+    * 从功能上，和 Spring Security OAuth 的 JdbcAuthorizationCodeServices 的功能，提供授权码的操作
+    *
+    * @author 芋道源码
+    */
+   public interface OAuth2CodeService {
+   
+       /**
+        * (用户授权完成后使用,yudao服务端下发code)
+        * 创建授权码
+        *
+        * 参考 JdbcAuthorizationCodeServices 的 createAuthorizationCode 方法
+        *
+        * @param userId 用户编号
+        * @param userType 用户类型
+        * @param clientId 客户端编号
+        * @param scopes 授权范围
+        * @param redirectUri 重定向 URI
+        * @param state 状态
+        * @return 授权码的信息
+        */
+       OAuth2CodeDO createAuthorizationCode(Long userId, Integer userType, String clientId,
+                                            List<String> scopes, String redirectUri, String state);
+   
+       /**
+        * (获取token时使用,服务端A用code换yudao服务端的token,code用完即销毁)
+        * 使用授权码
+        *
+        * @param code 授权码
+        */
+       OAuth2CodeDO consumeAuthorizationCode(String code);
+   
+   }
+   ```
+
+   ```java
+   /**
+    * OAuth2 授予 Service 接口
+    *
+    * 从功能上，和 Spring Security OAuth 的 TokenGranter 的功能，提供访问令牌、刷新令牌的操作
+    *
+    * 将自身的 AdminUser 用户，授权给第三方应用，采用 OAuth2.0 的协议。
+    *
+    * 问题：为什么自身也作为一个第三方应用，也走这套流程呢？
+    * 回复：当然可以这么做，采用 password 模式。考虑到大多数开发者使用不到这个特性，OAuth2.0 毕竟有一定学习成本，所以暂时没有采取这种方式。
+    *
+    * @author 芋道源码
+    */
+   public interface OAuth2GrantService {
+   
+       /**
+        * 简化模式
+        *
+        * 对应 Spring Security OAuth2 的 ImplicitTokenGranter 功能
+        *
+        * @param userId 用户编号
+        * @param userType 用户类型
+        * @param clientId 客户端编号
+        * @param scopes 授权范围
+        * @return 访问令牌
+        */
+       OAuth2AccessTokenDO grantImplicit(Long userId, Integer userType,
+                                         String clientId, List<String> scopes);
+   
+       /**
+        * 授权码模式，第一阶段，获得 code 授权码
+        *
+        * 对应 Spring Security OAuth2 的 AuthorizationEndpoint 的 generateCode 方法
+        *
+        * @param userId 用户编号
+        * @param userType 用户类型
+        * @param clientId 客户端编号
+        * @param scopes 授权范围
+        * @param redirectUri 重定向 URI
+        * @param state 状态
+        * @return 授权码
+        */
+       String grantAuthorizationCodeForCode(Long userId, Integer userType,
+                                            String clientId, List<String> scopes,
+                                            String redirectUri, String state);
+   
+       /**
+        * 授权码模式，第二阶段，获得 accessToken 访问令牌
+        *
+        * 对应 Spring Security OAuth2 的 AuthorizationCodeTokenGranter 功能
+        *
+        * @param clientId 客户端编号
+        * @param code 授权码
+        * @param redirectUri 重定向 URI
+        * @param state 状态
+        * @return 访问令牌
+        */
+       OAuth2AccessTokenDO grantAuthorizationCodeForAccessToken(String clientId, String code,
+                                                                String redirectUri, String state);
+   
+       /**
+        * 密码模式
+        *
+        * 对应 Spring Security OAuth2 的 ResourceOwnerPasswordTokenGranter 功能
+        *
+        * @param username 账号
+        * @param password 密码
+        * @param clientId 客户端编号
+        * @param scopes 授权范围
+        * @return 访问令牌
+        */
+       OAuth2AccessTokenDO grantPassword(String username, String password,
+                                         String clientId, List<String> scopes);
+   
+       /**
+        * 刷新模式
+        *
+        * 对应 Spring Security OAuth2 的 ResourceOwnerPasswordTokenGranter 功能
+        *
+        * @param refreshToken 刷新令牌
+        * @param clientId 客户端编号
+        * @return 访问令牌
+        */
+       OAuth2AccessTokenDO grantRefreshToken(String refreshToken, String clientId);
+   
+       /**
+        * 客户端模式
+        *
+        * 对应 Spring Security OAuth2 的 ClientCredentialsTokenGranter 功能
+        *
+        * @param clientId 客户端编号
+        * @param scopes 授权范围
+        * @return 访问令牌
+        */
+       OAuth2AccessTokenDO grantClientCredentials(String clientId, List<String> scopes);
+   
+       /**
+        * 移除访问令牌
+        *
+        * 对应 Spring Security OAuth2 的 ConsumerTokenServices 的 revokeToken 方法
+        *
+        * @param accessToken 访问令牌
+        * @param clientId 客户端编号
+        * @return 是否移除到
+        */
+       boolean revokeToken(String clientId, String accessToken);
+   
+   }
+   ```
+
+   - `OAuth2GrantService`:授权服务,各种授权模式的实际调用方.提供不同模式下访问令牌、刷新令牌和移除访问令牌的操作
+
+
