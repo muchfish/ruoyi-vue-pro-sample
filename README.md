@@ -1885,3 +1885,96 @@
    ```
 
    在这个例子中，第一次调用 `supplier.get()` 会进行计算并打印 "Calculating..."，而后续调用会直接返回缓存的结果而不会再次计算。这在某些场景下可以提高程序的性能和效率。
+   
+   
+
+#### 数据源配置(开始基础设施模块的复刻)
+> 供代码生成功能选择数据库时使用
+1. 数据源配置数据库模型
+
+   ![](.image/ruoyi-vue-pro-数据源配置.png)
+2. 代码摘要
+
+   **判断数据库连接是否正确**
+
+   ```java
+       /**
+        * 判断连接是否正确
+        *
+        * @param url      数据源连接
+        * @param username 账号
+        * @param password 密码
+        * @return 是否正确
+        */
+       public static boolean isConnectionOK(String url, String username, String password) {
+           try (Connection ignored = DriverManager.getConnection(url, username, password)) {
+               return true;
+           } catch (Exception ex) {
+               return false;
+           }
+       }
+   ```
+
+   - 自动资源管理：使用了`try-with-resources`结构来获取数据库连接，这确保了无论是否成功连接，连接都会被自动关闭。这有助于避免资源泄漏。
+   - 使用是否报错来判断链接是否正常
+
+   **获取配置文件中的主数据源配置**
+
+   ```java
+   @Resource
+   private DynamicDataSourceProperties dynamicDataSourceProperties;
+   
+   private DataSourceConfigDO buildMasterDataSourceConfig() {
+       String primary = dynamicDataSourceProperties.getPrimary();
+       DataSourceProperty dataSourceProperty = dynamicDataSourceProperties.getDatasource().get(primary);
+       return new DataSourceConfigDO().setId(DataSourceConfigDO.ID_MASTER).setName(primary)
+           .setUrl(dataSourceProperty.getUrl())
+           .setUsername(dataSourceProperty.getUsername())
+           .setPassword(dataSourceProperty.getPassword());
+   }
+   ```
+
+   - 使用自动注入获取数据源配置类`DynamicDataSourceProperties`(由`DynamicDataSourceAutoConfiguration`注册成为bean)
+
+   **`DynamicDataSourceProperties`**
+
+   ```java
+   /**
+    * DynamicDataSourceProperties
+    *
+    * @author TaoYu Kanyuxia
+    * @see DataSourceProperties
+    * @since 1.0.0
+    */
+   @Slf4j
+   @Getter
+   @Setter
+   @ConfigurationProperties(prefix = DynamicDataSourceProperties.PREFIX)
+   public class DynamicDataSourceProperties {
+       public static final String PREFIX = "spring.datasource.dynamic";
+   		//省略
+   }
+   
+   ```
+
+   ```java
+   /**
+    * 动态数据源核心自动配置类
+    *
+    * @author TaoYu Kanyuxia
+    * @see DynamicDataSourceProvider
+    * @see DynamicDataSourceStrategy
+    * @see DynamicRoutingDataSource
+    * @since 1.0.0
+    */
+   @Slf4j
+   @Configuration
+   @EnableConfigurationProperties(DynamicDataSourceProperties.class)
+   @AutoConfigureBefore(value = DataSourceAutoConfiguration.class, name = "com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure")
+   @Import(value = {DruidDynamicDataSourceConfiguration.class, DynamicDataSourceCreatorAutoConfiguration.class})
+   @ConditionalOnProperty(prefix = DynamicDataSourceProperties.PREFIX, name = "enabled", havingValue = "true", matchIfMissing = true)
+   public class DynamicDataSourceAutoConfiguration implements InitializingBean {
+   }
+   ```
+
+   - 由`DynamicDataSourceAutoConfiguration`动态数据源核心自动配置类,中启用`DynamicDataSourceProperties`,并使其注册成为bean
