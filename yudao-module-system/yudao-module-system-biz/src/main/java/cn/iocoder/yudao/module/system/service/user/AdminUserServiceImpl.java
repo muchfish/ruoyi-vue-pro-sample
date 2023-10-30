@@ -2,7 +2,6 @@ package cn.iocoder.yudao.module.system.service.user;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
@@ -31,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -207,7 +205,25 @@ public class AdminUserServiceImpl implements AdminUserService {
         return userMapper.selectById(id);
     }
 
+    @Override
+    public List<AdminUserDO> getUserListByDeptIds(Collection<Long> deptIds) {
+        if (CollUtil.isEmpty(deptIds)) {
+            return Collections.emptyList();
+        }
+        return userMapper.selectListByDeptIds(deptIds);
+    }
 
+    @Override
+    public List<AdminUserDO> getUserListByPostIds(Collection<Long> postIds) {
+        if (CollUtil.isEmpty(postIds)) {
+            return Collections.emptyList();
+        }
+        Set<Long> userIds = convertSet(userPostMapper.selectListByPostIds(postIds), UserPostDO::getUserId);
+        if (CollUtil.isEmpty(userIds)) {
+            return Collections.emptyList();
+        }
+        return userMapper.selectBatchIds(userIds);
+    }
 
     @Override
     public List<AdminUserDO> getUserList(Collection<Long> ids) {
@@ -215,6 +231,26 @@ public class AdminUserServiceImpl implements AdminUserService {
             return Collections.emptyList();
         }
         return userMapper.selectBatchIds(ids);
+    }
+
+    @Override
+    public void validateUserList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        // 获得岗位信息
+        List<AdminUserDO> users = userMapper.selectBatchIds(ids);
+        Map<Long, AdminUserDO> userMap = CollectionUtils.convertMap(users, AdminUserDO::getId);
+        // 校验
+        ids.forEach(id -> {
+            AdminUserDO user = userMap.get(id);
+            if (user == null) {
+                throw exception(USER_NOT_EXISTS);
+            }
+            if (!CommonStatusEnum.ENABLE.getStatus().equals(user.getStatus())) {
+                throw exception(USER_IS_DISABLE, user.getNickname());
+            }
+        });
     }
 
     @Override

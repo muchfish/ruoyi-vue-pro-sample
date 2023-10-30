@@ -1978,3 +1978,23 @@
    ```
 
    - 由`DynamicDataSourceAutoConfiguration`动态数据源核心自动配置类,中启用`DynamicDataSourceProperties`,并使其注册成为bean
+
+
+#### 代码生成
+1. 代码生成流程
+   1. 配置数据源,在该数据源数据库下建表
+   2. 基于数据库的表结构，创建代码生成器的表和字段定义
+      1. 通过数据源id+表名,解析出表结构[DatabaseTableService.java](yudao-module-infra%2Fyudao-module-infra-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Finfra%2Fservice%2Fdb%2FDatabaseTableService.java)#getTable(...)
+         1. 使用 MyBatis Plus Generator 解析表结构和字段定义
+            1. MyBatis Plus Generator 使用原生`java.sql`下的`DatabaseMetaData#getTables(...)`获取表结构
+            2. MyBatis Plus Generator 使用原生`java.sql`下的`DatabaseMetaDataWrapper#getColumnsInfo(...)`获取字段定义
+      2. 创建代码生成器的表和字段定义
+         1. 将解析出的表结构和字段定义润色后存入`infra_codegen_table`和`infra_codegen_column`,见[CodegenBuilder.java](yudao-module-infra%2Fyudao-module-infra-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Finfra%2Fservice%2Fcodegen%2Finner%2FCodegenBuilder.java)
+   3. 生成代码[CodegenEngine.java](yudao-module-infra%2Fyudao-module-infra-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Finfra%2Fservice%2Fcodegen%2Finner%2FCodegenEngine.java)
+      1. 通过代码生成器的表和字段定义等生成待填充的参数
+      2. 获取resources/codegen目录下的模板
+      3. 将参数填充至模板
+
+
+
+   

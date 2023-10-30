@@ -53,5 +53,8 @@ public interface AdminUserMapper extends BaseMapperX<AdminUserDO> {
         return selectList(AdminUserDO::getStatus, status);
     }
 
+    default List<AdminUserDO> selectListByDeptIds(Collection<Long> deptIds) {
+        return selectList(AdminUserDO::getDeptId, deptIds);
+    }
 
 }

@@ -100,6 +100,14 @@ public class CollectionUtils {
         }
         return from.stream().collect(Collectors.toMap(keyFunc, valueFunc, mergeFunction, supplier));
     }
+
+    public static <T> T findFirst(List<T> from, Predicate<T> predicate) {
+        if (CollUtil.isEmpty(from)) {
+            return null;
+        }
+        return from.stream().filter(predicate).findFirst().orElse(null);
+    }
+
     public static <T, V extends Comparable<? super V>> V getMaxValue(Collection<T> from, Function<T, V> valueFunc) {
         if (CollUtil.isEmpty(from)) {
             return null;
