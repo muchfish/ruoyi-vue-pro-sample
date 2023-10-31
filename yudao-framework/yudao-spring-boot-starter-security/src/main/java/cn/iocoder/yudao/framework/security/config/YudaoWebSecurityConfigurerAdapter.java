@@ -51,6 +51,14 @@ public class YudaoWebSecurityConfigurerAdapter {
      */
     @Resource
     private TokenAuthenticationFilter authenticationTokenFilter;
+
+    /**
+     * 自定义的权限映射 Bean 们
+     *
+     * @see #filterChain(HttpSecurity)
+     */
+    @Resource
+    private List<AuthorizeRequestsCustomizer> authorizeRequestsCustomizers;
     @Resource
     private ApplicationContext applicationContext;
 
@@ -85,6 +93,7 @@ public class YudaoWebSecurityConfigurerAdapter {
         httpSecurity
                 // CSRF 禁用
                 .csrf().disable()
+                .headers().frameOptions().disable().and()
                 // 一堆自定义的 Spring Security 处理器
                 .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler);
@@ -93,6 +102,8 @@ public class YudaoWebSecurityConfigurerAdapter {
         httpSecurity
                 // ①：全局共享规则
                 .authorizeRequests()
+                // 1.0 静态资源，可匿名访问
+                .antMatchers(HttpMethod.GET, "/*.html", "/**/*.html", "/**/*.css", "/**/*.js").permitAll()
                 // 1.1 设置 @LoginFree 无需认证
                 .antMatchers(HttpMethod.GET, loginFreeUrls.get(HttpMethod.GET).toArray(new String[0])).permitAll()
                 .antMatchers(HttpMethod.POST, loginFreeUrls.get(HttpMethod.POST).toArray(new String[0])).permitAll()
@@ -103,7 +114,11 @@ public class YudaoWebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, authenticatedUrls.get(HttpMethod.POST).toArray(new String[0])).authenticated()
                 .antMatchers(HttpMethod.PUT, authenticatedUrls.get(HttpMethod.PUT).toArray(new String[0])).authenticated()
                 .antMatchers(HttpMethod.DELETE, authenticatedUrls.get(HttpMethod.DELETE).toArray(new String[0])).authenticated()
+                // ②：每个项目的自定义规则
+                .and().authorizeRequests(registry -> // 下面，循环设置自定义规则
+                        authorizeRequestsCustomizers.forEach(customizer -> customizer.customize(registry)))
                 // ③：兜底规则，必须认证
+                .authorizeRequests()
                 .anyRequest().authenticated()
         ;
 

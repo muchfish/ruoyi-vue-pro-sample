@@ -1994,7 +1994,147 @@
       1. 通过代码生成器的表和字段定义等生成待填充的参数
       2. 获取resources/codegen目录下的模板
       3. 将参数填充至模板
-
-
-
+2. 数据库模型
    
+   ![](.image/ruoyi-vue-pro-代码生成.png)
+
+
+#### 系统接口与配置管理
+1. 系统接口
+   1. spring Security中配置静态资源可匿名访问
+   
+      1. 系统接口文档访问地址:http://localhost:48080/doc.html
+   
+   2. 禁用 X-Frame-Options 标头，允许页面在框架中嵌入。
+   
+      1. 系统接口菜单中会内嵌接口文档doc.html页面
+   
+      ```java
+        httpSecurity.headers().frameOptions().disable()
+      ```
+   
+      `httpSecurity.headers().frameOptions().disable()` 是 Spring Security 中的一项配置，用于禁用 HTTP 响应头中的 X-Frame-Options 标头。这个标头通常用于防止跨站点请求伪造（Cross-Site Request Forgery, CSRF）攻击，以及点击劫持攻击。在某些情况下，您可能需要禁用它，以便在您的应用程序中使用内嵌的框架或嵌入其他网站的内容。
+   
+      解释一下：
+   
+      1. **X-Frame-Options 标头**：X-Frame-Options 是一个 HTTP 标头，用于告知浏览器如何处理嵌入的框架。它可以有以下几个值：
+         - `DENY`：浏览器不允许嵌入此页面中的任何框架。
+         - `SAMEORIGIN`：浏览器只允许在与页面相同域的框架中加载此页面。
+         - `ALLOW-FROM uri`：浏览器只允许指定 URI 的框架加载此页面。
+   
+      2. **`httpSecurity.headers().frameOptions().disable()`**：这是 Spring Security 的配置方法，通过它您可以禁用 X-Frame-Options 标头，允许页面在框架中嵌入。这对于需要在应用程序中嵌入其他网站的内容或使用内嵌的框架（例如，内嵌的视频播放器）的情况非常有用。
+   
+      请注意，禁用 X-Frame-Options 标头可能会使您的应用程序更容易受到一些安全威胁，因此只有在明确了解潜在风险并采取其他安全措施的情况下才应该禁用它。如果您不确定是否需要禁用 X-Frame-Options，最好仔细考虑您的应用程序的需求和安全性。
+   
+   3. 自定义spring security规则路径权限规则
+   
+      1. doc.html中需要调用Swagger 接口文档中一些接口和页面,在此处进行放行
+   
+      - 基于实现`Customizer<T>`自定义URL 的安全配置
+   
+        ```java
+        /**
+         *接受单个输入参数且不返回任何结果的回调接口。
+         *
+         * @param <T> the type of the input to the operation
+         * @author Eleftheria Stein
+         * @since 5.2
+         */
+        @FunctionalInterface
+        public interface Customizer<T> {
+        
+        	/**
+        	 * 对输入参数执行自定义。
+        	 * 形参: t – 输入参数
+        	 */
+        	void customize(T t);
+        
+        	/**
+        	 * Returns a {@link Customizer} that does not alter the input argument.
+        	 * @return a {@link Customizer} that does not alter the input argument.
+        	 */
+        	static <T> Customizer<T> withDefaults() {
+        		return (t) -> {
+        		};
+        	}
+        
+        }
+        ```
+   
+      - 实现自定义的 URL 的安全配置
+   
+        ```java
+        /**
+         * 自定义的 URL 的安全配置
+         * 目的：每个 Maven Module 可以自定义规则！
+         *
+         * @author 芋道源码
+         */
+        public abstract class AuthorizeRequestsCustomizer
+                implements Customizer<ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry>, Ordered {
+        
+            @Resource
+            private WebProperties webProperties;
+        
+            protected String buildAdminApi(String url) {
+                return webProperties.getAdminApi().getPrefix() + url;
+            }
+        
+            protected String buildAppApi(String url) {
+                return webProperties.getAppApi().getPrefix() + url;
+            }
+        
+            @Override
+            public int getOrder() {
+                return 0;
+            }
+        
+        }
+        ```
+   
+        ```java
+        /**
+         * Infra 模块的 Security 配置
+         */
+        @Configuration(proxyBeanMethods = false, value = "infraSecurityConfiguration")
+        public class SecurityConfiguration {
+        
+            @Bean("infraAuthorizeRequestsCustomizer")
+            public AuthorizeRequestsCustomizer authorizeRequestsCustomizer() {
+                return new AuthorizeRequestsCustomizer() {
+        
+                    @Override
+                    public void customize(ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry registry) {
+                        // Swagger 接口文档
+                        registry.antMatchers("/v3/api-docs/**").permitAll()
+                                .antMatchers("/swagger-ui.html").permitAll()
+                                .antMatchers("/swagger-ui/**").permitAll()
+                                .antMatchers("/swagger-resources/**").anonymous()
+                                .antMatchers("/webjars/**").anonymous()
+                                .antMatchers("/*/api-docs").anonymous();
+                    }
+        
+                };
+            }
+        
+        }
+        ```
+   
+        ```java
+            @Resource
+            private List<AuthorizeRequestsCustomizer> authorizeRequestsCustomizers;
+            // 省略
+            // ②：每个项目的自定义规则
+            httpSecurity.and().authorizeRequests(registry -> // 下面，循环设置自定义规则
+                    authorizeRequestsCustomizers.forEach(customizer -> customizer.customize(registry)))
+        ```
+   
+2. 配置管理
+   - 目前只给前端使用.(服务端也可以使用)
+   
+     ![](.image/ruoyi-vue-pro-配置管理.png)
+     
+     ​     
+     
+     
+
