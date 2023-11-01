@@ -25,6 +25,8 @@ public class SecurityConfiguration {
                         .antMatchers("/swagger-resources/**").anonymous()
                         .antMatchers("/webjars/**").anonymous()
                         .antMatchers("/*/api-docs").anonymous();
+                // 文件读取
+                registry.antMatchers(buildAdminApi("/infra/file/*/get/**")).permitAll();
             }
 
         };

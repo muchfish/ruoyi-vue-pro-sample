@@ -18,6 +18,7 @@
         <module>yudao-spring-boot-starter-web</module>
         <module>yudao-spring-boot-starter-security</module>
 
+        <module>yudao-spring-boot-starter-file</module>
         <module>yudao-spring-boot-starter-mq</module>
 
         <module>yudao-spring-boot-starter-excel</module>

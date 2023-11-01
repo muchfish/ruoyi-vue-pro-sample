@@ -2173,6 +2173,257 @@
           }
       ```
 
+#### 文件管理
+1. 文件组件代码结构图
+
+   1. 简单工厂+工厂模式实现文件上传等功能
+
+   ![工厂+模板方法实现文件上传](.image/工厂+模板方法实现文件上传.png)
+
+   2. 多种文件客户端
+
+   ![多种文件客户端.png](.image/多种文件客户端.png)
+
+   ```java
+   public enum FileStorageEnum {
+   
+       DB(1, DBFileClientConfig.class, DBFileClient.class),
+   
+       LOCAL(10, LocalFileClientConfig.class, LocalFileClient.class),
+       FTP(11, FtpFileClientConfig.class, FtpFileClient.class),
+       SFTP(12, SftpFileClientConfig.class, SftpFileClient.class),
+   
+       S3(20, S3FileClientConfig.class, S3FileClient.class),
+       ;
+   
+       /**
+        * 存储器
+        */
+       private final Integer storage;
+   
+       /**
+        * 配置类
+        */
+       private final Class<? extends FileClientConfig> configClass;
+       /**
+        * 客户端类
+        */
+       private final Class<? extends FileClient> clientClass;
+   
+       public static FileStorageEnum getByStorage(Integer storage) {
+           return ArrayUtil.firstMatch(o -> o.getStorage().equals(storage), values());
+       }
+   
+   }
+   ```
+
+   ```java
+       private <Config extends FileClientConfig> AbstractFileClient<Config> createFileClient(
+               Long configId, Integer storage, Config config) {
+           FileStorageEnum storageEnum = FileStorageEnum.getByStorage(storage);
+           Assert.notNull(storageEnum, String.format("文件配置(%s) 为空", storageEnum));
+           // 创建客户端
+           return (AbstractFileClient<Config>) ReflectUtil.newInstance(storageEnum.getClientClass(), configId, config);
+       }
+   ```
+
+   - 通过`ReflectUtil.newInstance`反射创建客户端实例(hutool提供)
+
+   3. 多种文件客户端配置
+
+   ![多种文件客户端配置类](.image/多种文件客户端配置类.png)
+   ```java
+   /**
+    * 文件客户端的配置
+    * 不同实现的客户端，需要不同的配置，通过子类来定义
+    *
+    * @author 芋道源码
+    */
+   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+   // @JsonTypeInfo 注解的作用，Jackson 多态
+   // 1. 序列化到时数据库时，增加 @class 属性。
+   // 2. 反序列化到内存对象时，通过 @class 属性，可以创建出正确的类型
+   public interface FileClientConfig {
+   }
+   ```
+   - **`@JsonTypeInfo`**: 
+
+     - 序列化到时数据库时，增加 @class 属性。 
+     - 反序列化到内存对象时，通过 @class 属性，可以创建出正确的类型
+     
+     `@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)` 是 Jackson 库中用于序列化和反序列化 Java 对象的注解。它的主要作用是为对象添加类型信息，以便在反序列化时能够正确还原对象的类型。这对于处理多态类型、子类对象和泛型类型非常有用。
+     
+     具体来说，`@JsonTypeInfo` 注解中的 `use` 属性定义了类型信息的存储方式，而 `JsonTypeInfo.Id` 枚举提供了不同的选项，其中包括以下几种常见的选项：
+     
+     1. `JsonTypeInfo.Id.CLASS`：使用类的全限定名作为类型标识，将类型信息作为属性添加到序列化后的 JSON 数据中。这允许在反序列化时将 JSON 转换回正确的 Java 类型。
+     
+     2. `JsonTypeInfo.Id.MINIMAL_CLASS`：与 `JsonTypeInfo.Id.CLASS` 类似，但只存储最小限定的类名信息，以减少类型信息的大小。
+     
+     3. `JsonTypeInfo.Id.NAME`：使用类名的简单名称作为类型标识，将类型信息作为属性添加到序列化后的 JSON 数据中。
+     
+     4. `JsonTypeInfo.Id.CUSTOM`：允许自定义类型标识的存储和检索方式，需要提供自定义的 `TypeResolverBuilder` 实现。
+     
+     `@JsonTypeInfo` 注解通常与 `@JsonSubTypes` 注解一起使用，后者用于指定多态类型的子类。这样，Jackson 库在反序列化时能够正确地选择适当的子类来还原对象。
+     
+     示例：
+     
+     ```java
+     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+     @JsonSubTypes({
+         @Type(value = Dog.class, name = "dog"),
+         @Type(value = Cat.class, name = "cat")
+     })
+     public abstract class Animal {
+         // ...
+     }
+     
+     public class Dog extends Animal {
+         // ...
+     }
+     
+     public class Cat extends Animal {
+         // ...
+     }
+     ```
+     
+     在上述示例中，`@JsonTypeInfo` 用于存储类型信息，并 `@JsonSubTypes` 用于定义多态类型的子类。这使得 Jackson 能够在反序列化时正确选择 `Dog` 或 `Cat` 类型的子类。
+
+   4. 使用`tika`做文件类型的识别
+
+      ```xml
+              <dependency>
+                  <groupId>org.apache.tika</groupId>
+                  <artifactId>tika-core</artifactId> <!-- 文件类型的识别 -->
+              </dependency>
+      ```
+
+      ```java
+      /**
+       * 文件类型 Utils
+       *
+       * @author 芋道源码
+       */
+      public class FileTypeUtils {
+      
+          private static final ThreadLocal<Tika> TIKA = TransmittableThreadLocal.withInitial(Tika::new);
+      
+          /**
+           * 获得文件的 mineType，对于doc，jar等文件会有误差
+           *
+           * @param data 文件内容
+           * @return mineType 无法识别时会返回“application/octet-stream”
+           */
+          @SneakyThrows
+          public static String getMineType(byte[] data) {
+              return TIKA.get().detect(data);
+          }
+      
+          /**
+           * 已知文件名，获取文件类型，在某些情况下比通过字节数组准确，例如使用jar文件时，通过名字更为准确
+           *
+           * @param name 文件名
+           * @return mineType 无法识别时会返回“application/octet-stream”
+           */
+          public static String getMineType(String name) {
+              return TIKA.get().detect(name);
+          }
+      
+          /**
+           * 在拥有文件和数据的情况下，最好使用此方法，最为准确
+           *
+           * @param data 文件内容
+           * @param name 文件名
+           * @return mineType 无法识别时会返回“application/octet-stream”
+           */
+          public static String getMineType(byte[] data, String name) {
+              return TIKA.get().detect(data, name);
+          }
+      
+      }
+      ```
+
       
 
+2. 文件客户端的缓存和更新
+
+   ```java
+       //主文件客户端id
+       private static final Long CACHE_MASTER_ID = 0L;
+   
+       /**
+        * {@link FileClient} 缓存，通过它异步刷新 fileClientFactory
+        */
+       @Getter
+       private final LoadingCache<Long, FileClient> clientCache = buildAsyncReloadingCache(Duration.ofSeconds(10L),
+               new CacheLoader<Long, FileClient>() {
+   
+                   @Override
+                   public FileClient load(Long id) {
+                       FileConfigDO config = Objects.equals(CACHE_MASTER_ID, id) ?
+                               fileConfigMapper.selectByMaster() : fileConfigMapper.selectById(id);
+                       if (config != null) {
+                           fileClientFactory.createOrUpdateFileClient(config.getId(), config.getStorage(), config.getConfig());
+                       }
+                       return fileClientFactory.getFileClient(null == config ? id : config.getId());
+                   }
+   
+                });
+   
+   ```
+
+3. 按链接访问文件
+
+   ```java
+       @GetMapping("/{configId}/get/**")
+       @LoginFree
+       @Operation(summary = "下载文件")
+       @Parameter(name = "configId", description = "配置编号",  required = true)
+       public void getFileContent(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  @PathVariable("configId") Long configId) throws Exception {
+           // 获取请求的路径
+           String path = StrUtil.subAfter(request.getRequestURI(), "/get/", false);
+           if (StrUtil.isEmpty(path)) {
+               throw new IllegalArgumentException("结尾的 path 路径必须传递");
+           }
+   
+           // 读取内容
+           byte[] content = fileService.getFileContent(configId, URLUtil.decode(path));
+           if (content == null) {
+               log.warn("[getFileContent][configId({}) path({}) 文件不存在]", configId, path);
+               response.setStatus(HttpStatus.NOT_FOUND.value());
+               return;
+           }
+           ServletUtils.writeAttachment(response, path, content);
+       }
+   ```
+
+   - 通过`/{configId}/get/**`匹配所有文件访问请求
+
+4. 文件管理数据库模型
+   
+   ![文件管理数据库模型](.image/ruoyi-vue-pro-文件管理.png)
+   
+5. 用户个人中心支持上传用户个人头像
+
+6. S3 协议
+   
+   > S3（Simple Storage Service）协议是亚马逊 Web 服务（AWS）提供的对象存储服务的协议。S3 协议定义了一组 API 操作，用于存储和检索数据对象，这些对象可以是文件、图像、视频、文档等。AWS S3 是一种高度可扩展、安全和耐用的云存储服务，广泛用于存储和管理大量的数据。
+   >
+   > MinIO，又称为MinIO Server，是一个开源的对象存储服务器，它实现了S3协议，使您能够在本地或私有云环境中构建和运行自己的对象存储服务。MinIO 的设计目标是提供与 AWS S3 兼容的存储服务，以便您可以使用现有的 S3 工具和库来访问和管理数据。MinIO 支持高度可扩展的架构，并具有出色的性能和可靠性，使其成为存储大规模数据的理想选择。
+   >
+   > 以下是 S3 协议和 MinIO 的关键特点和关系：
+   >
+   > 1. **S3 协议**：
+   >    - S3 协议是 AWS 提供的对象存储服务的协议，定义了一组 API 操作，用于存储和检索数据对象。
+   >    - S3 协议是一种标准的云存储协议，广泛用于云存储服务和应用程序之间的数据交互。
+   >    - 它支持多种功能，包括对象存储、数据版本控制、数据加密、访问控制和数据生命周期管理。
+   > 2. **MinIO**：
+   >    - MinIO 是一个开源的对象存储服务器，实现了 S3 协议，允许您在本地或私有云环境中构建和运行对象存储服务。
+   >    - MinIO 提供与 AWS S3 兼容的 API，使您可以使用 S3 工具和库来与 MinIO 交互。
+   >    - 它是一个高度可扩展的存储解决方案，适用于大规模数据存储和分发。
+   > 3. 阿里云、腾讯云、七牛云、华为云等也提供了与 S3 协议兼容的对象存储服务或解决方案，使开发人员能够使用 S3 工具和库来与这些云服务交互
+   > 4. MinIO 使用 S3 工具和库可以与阿里云、腾讯云、七牛云、华为云等进行交互
+   >
+   > MinIO 的出现使开发人员能够搭建自己的 S3 兼容的对象存储服务器，而不必依赖于云服务提供商。这对于构建私有云存储、数据存档、备份和恢复解决方案以及开发基于对象存储的应用程序非常有用。MinIO 可以在 Docker 容器中运行，也可以部署到本地服务器或云环境中，使其非常灵活和易于管理。
 

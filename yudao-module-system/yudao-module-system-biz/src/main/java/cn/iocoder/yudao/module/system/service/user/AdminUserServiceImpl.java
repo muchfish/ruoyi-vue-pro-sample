@@ -2,12 +2,14 @@ package cn.iocoder.yudao.module.system.service.user;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.datapermission.core.util.DataPermissionUtils;
+import cn.iocoder.yudao.module.infra.api.file.FileApi;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.*;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -68,6 +71,8 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Resource
     private UserPostMapper userPostMapper;
 
+    @Resource
+    private FileApi fileApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -148,6 +153,19 @@ public class AdminUserServiceImpl implements AdminUserService {
         AdminUserDO updateObj = new AdminUserDO().setId(id);
         updateObj.setPassword(encodePassword(reqVO.getNewPassword())); // 加密密码
         userMapper.updateById(updateObj);
+    }
+
+    @Override
+    public String updateUserAvatar(Long id, InputStream avatarFile) throws Exception {
+        validateUserExists(id);
+        // 存储文件
+        String avatar = fileApi.createFile(IoUtil.readBytes(avatarFile));
+        // 更新路径
+        AdminUserDO sysUserDO = new AdminUserDO();
+        sysUserDO.setId(id);
+        sysUserDO.setAvatar(avatar);
+        userMapper.updateById(sysUserDO);
+        return avatar;
     }
 
     @Override

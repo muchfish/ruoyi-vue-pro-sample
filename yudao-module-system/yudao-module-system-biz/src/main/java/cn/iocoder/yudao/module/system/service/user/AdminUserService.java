@@ -59,6 +59,14 @@ public interface AdminUserService {
     void updateUserPassword(Long id, @Valid UserProfileUpdatePasswordReqVO reqVO);
 
     /**
+     * 更新用户头像
+     *
+     * @param id         用户 id
+     * @param avatarFile 头像文件
+     */
+    String updateUserAvatar(Long id, InputStream avatarFile) throws Exception;
+
+    /**
      * 修改密码
      *
      * @param id       用户编号

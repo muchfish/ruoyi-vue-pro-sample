@@ -21,13 +21,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_IS_EMPTY;
 
 @Tag(name = "管理后台 - 用户个人中心")
 @RestController
@@ -84,6 +87,14 @@ public class UserProfileController {
         return success(true);
     }
 
-
+    @RequestMapping(value = "/update-avatar", method = {RequestMethod.POST, RequestMethod.PUT}) // 解决 uni-app 不支持 Put 上传文件的问题
+    @Operation(summary = "上传用户个人头像")
+    public CommonResult<String> updateUserAvatar(@RequestParam("avatarFile") MultipartFile file) throws Exception {
+        if (file.isEmpty()) {
+            throw exception(FILE_IS_EMPTY);
+        }
+        String avatar = userService.updateUserAvatar(getLoginUserId(), file.getInputStream());
+        return success(avatar);
+    }
 
 }
