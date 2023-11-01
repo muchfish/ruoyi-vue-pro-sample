@@ -2134,7 +2134,45 @@
    
      ![](.image/ruoyi-vue-pro-配置管理.png)
      
-     ​     
-     
-     
+
+#### 数据库文档
+1. 集成Screw 数据库文档生成框架
+
+   ```xml
+           <dependency>
+               <groupId>cn.smallbun.screw</groupId>
+               <artifactId>screw-core</artifactId> <!-- 实现数据库文档 -->
+           </dependency>
+   ```
+
+    
+
+2. 创建 screw 的引擎配置
+
+   1. 使用`velocity`模板
+
+      Velocity 是一个用于生成文本输出的模板引擎
+
+3. 代码摘要
+
+   1. 返回附件后删除本地文件,finally中执行文件删除操作
+
+      ```java
+          private void doExportFile(EngineFileType fileOutputType, Boolean deleteFile,
+                                    HttpServletResponse response) throws IOException {
+              String docFileName = DOC_FILE_NAME + "_" + IdUtil.fastSimpleUUID();
+              String filePath = doExportFile(fileOutputType, docFileName);
+              String downloadFileName = DOC_FILE_NAME + fileOutputType.getFileSuffix(); //下载后的文件名
+              try {
+                  // 读取，返回
+                  ServletUtils.writeAttachment(response, downloadFileName, FileUtil.readBytes(filePath));
+              } finally {
+                  //finally中执行文件删除操作
+                  handleDeleteFile(deleteFile, filePath);
+              }
+          }
+      ```
+
+      
+
 
