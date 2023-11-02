@@ -2427,3 +2427,335 @@
    >
    > MinIO 的出现使开发人员能够搭建自己的 S3 兼容的对象存储服务器，而不必依赖于云服务提供商。这对于构建私有云存储、数据存档、备份和恢复解决方案以及开发基于对象存储的应用程序非常有用。MinIO 可以在 Docker 容器中运行，也可以部署到本地服务器或云环境中，使其非常灵活和易于管理。
 
+#### API日志
+1. API日志web组件[apilog](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fapilog)
+   
+   1. 访问日志记录
+   
+      1. 使用`Filter`记录用户访问 API 的访问日志[ApiAccessLogFilter.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fapilog%2Fcore%2Ffilter%2FApiAccessLogFilter.java)
+   
+         ```java
+             @Override
+             protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                     throws ServletException, IOException {
+                 // 获得开始时间
+                 LocalDateTime beginTime = LocalDateTime.now();
+                 // 提前获得参数，避免 XssFilter 过滤处理
+                 Map<String, String> queryString = ServletUtils.getParamMap(request);
+                 String requestBody = ServletUtils.isJsonRequest(request) ? ServletUtils.getBody(request) : null;
+         
+                 try {
+                     // 继续过滤器
+                     filterChain.doFilter(request, response);
+                     // 正常执行，记录日志
+                     createApiAccessLog(request, beginTime, queryString, requestBody, null);
+                 } catch (Exception ex) {
+                     // 异常执行，记录日志
+                     createApiAccessLog(request, beginTime, queryString, requestBody, ex);
+                     throw ex;
+                 }
+             }
+         ```
+   
+         - `ServletUtils.isJsonRequest(request)`判断是否为application/json亲求
+   
+           ```java
+               public static boolean isJsonRequest(ServletRequest request) {
+                   return StrUtil.startWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE);
+               }
+           ```
+   
+      2. 构建访问日志
+   
+         ```java
+               private void buildApiAccessLogDTO(ApiAccessLog accessLog, HttpServletRequest request, LocalDateTime beginTime,
+                                                 Map<String, String> queryString, String requestBody, Exception ex) {
+                   // 处理用户信息
+                   accessLog.setUserId(WebFrameworkUtils.getLoginUserId(request));
+                   accessLog.setUserType(WebFrameworkUtils.getLoginUserType(request));
+                   // 设置访问结果
+                   CommonResult<?> result = WebFrameworkUtils.getCommonResult(request);
+                   if (result != null) {
+                       accessLog.setResultCode(result.getCode());
+                       accessLog.setResultMsg(result.getMsg());
+                   } else if (ex != null) {
+                       accessLog.setResultCode(GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR.getCode());
+                       accessLog.setResultMsg(ExceptionUtil.getRootCauseMessage(ex));
+                   } else {
+                       accessLog.setResultCode(0);
+                       accessLog.setResultMsg("");
+                   }
+                   // 设置其它字段
+                   accessLog.setTraceId("");// TODO: 2/11/2023  trace
+                   accessLog.setApplicationName(applicationName);
+                   accessLog.setRequestUrl(request.getRequestURI());
+                   Map<String, Object> requestParams = MapUtil.<String, Object>builder().put("query", queryString).put("body", requestBody).build();
+                   accessLog.setRequestParams(toJsonString(requestParams));
+                   accessLog.setRequestMethod(request.getMethod());
+                   accessLog.setUserAgent(ServletUtils.getUserAgent(request));
+                   accessLog.setUserIp(ServletUtils.getClientIP(request));
+                   // 持续时间
+                   accessLog.setBeginTime(beginTime);
+                   accessLog.setEndTime(LocalDateTime.now());
+                   accessLog.setDuration((int) LocalDateTimeUtil.between(accessLog.getBeginTime(), accessLog.getEndTime(), ChronoUnit.MILLIS));
+               }
+         ```
+   
+         - `ExceptionUtil.getRootCauseMessage(ex)`:获取异常链中最尾端的异常的消息(hutool提供)
+         - WebFrameworkUtils.getCommonResult(request):获取访问结果.由[GlobalResponseBodyHandler.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fweb%2Fcore%2Fhandler%2FGlobalResponseBodyHandler.java)进行结果数据填充
+   
+   2. 错误日志记录
+   
+      1. 在系统异常中进行错误日志记录[GlobalExceptionHandler.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fweb%2Fcore%2Fhandler%2FGlobalExceptionHandler.java)
+   
+         ```java
+             /**
+              * 处理系统异常，兜底处理所有的一切
+              */
+             @ExceptionHandler(value = Exception.class)
+             public CommonResult<?> defaultExceptionHandler(HttpServletRequest req, Throwable ex) {
+         	   // 省略部分代码...
+                 // 情况三：处理异常
+                 log.error("[defaultExceptionHandler]", ex);
+                 // 插入异常日志
+                 this.createExceptionLog(req, ex);
+                 // 返回 ERROR CommonResult
+                 return CommonResult.error(INTERNAL_SERVER_ERROR.getCode(), INTERNAL_SERVER_ERROR.getMsg());
+             }
+         ```
+   
+      2. 构建错误日志
+   
+         ```java
+             private void initExceptionLog(ApiErrorLog errorLog, HttpServletRequest request, Throwable e) {
+                 // 处理用户信息
+                 errorLog.setUserId(WebFrameworkUtils.getLoginUserId(request));
+                 errorLog.setUserType(WebFrameworkUtils.getLoginUserType(request));
+                 // 设置异常字段
+                 errorLog.setExceptionName(e.getClass().getName());
+                 errorLog.setExceptionMessage(ExceptionUtil.getMessage(e));
+                 errorLog.setExceptionRootCauseMessage(ExceptionUtil.getRootCauseMessage(e));
+                 errorLog.setExceptionStackTrace(ExceptionUtils.getStackTrace(e));
+                 StackTraceElement[] stackTraceElements = e.getStackTrace();
+                 Assert.notEmpty(stackTraceElements, "异常 stackTraceElements 不能为空");
+                 StackTraceElement stackTraceElement = stackTraceElements[0];
+                 errorLog.setExceptionClassName(stackTraceElement.getClassName());
+                 errorLog.setExceptionFileName(stackTraceElement.getFileName());
+                 errorLog.setExceptionMethodName(stackTraceElement.getMethodName());
+                 errorLog.setExceptionLineNumber(stackTraceElement.getLineNumber());
+                 // 设置其它字段
+                 errorLog.setTraceId("");// TODO: 2/11/2023  trace
+                 errorLog.setApplicationName(applicationName);
+                 errorLog.setRequestUrl(request.getRequestURI());
+                 Map<String, Object> requestParams = MapUtil.<String, Object>builder()
+                         .put("query", ServletUtils.getParamMap(request))
+                         .put("body", ServletUtils.getBody(request)).build();
+                 errorLog.setRequestParams(JsonUtils.toJsonString(requestParams));
+                 errorLog.setRequestMethod(request.getMethod());
+                 errorLog.setUserAgent(ServletUtils.getUserAgent(request));
+                 errorLog.setUserIp(ServletUtils.getClientIP(request));
+                 errorLog.setExceptionTime(LocalDateTime.now());
+             }
+         ```
+   
+         - `errorLog.setExceptionName(e.getClass().getName());`:
+   
+           - 设置异常名.e.g:`java.lang.NullPointerException`
+   
+         - `errorLog.setExceptionClassName(stackTraceElement.getClassName());`
+   
+           - 设置异常发生的类全名: .e.g:`cn.hutool.core.collection.CollUtil`
+   
+         - `errorLog.setExceptionMethodName(stackTraceElement.getMethodName());`:
+   
+           - 设置异常发生的方法名: e.g:subtract
+   
+         - `errorLog.setExceptionLineNumber(stackTraceElement.getLineNumber())`:
+   
+           - 设置异常发生的方法所在行
+   
+         - `errorLog.setExceptionStackTrace(ExceptionUtils.getStackTrace(e));`
+   
+           - 设置异常的栈轨迹
+   
+             ```java
+             java.lang.NullPointerException: Cannot invoke "Object.getClass()" because "coll1" is null
+             	at cn.hutool.core.collection.CollUtil.subtract(CollUtil.java:370)
+             	at cn.iocoder.yudao.module.system.service.user.AdminUserServiceImpl.updateUserPost(AdminUserServiceImpl.java:121)
+             	at cn.iocoder.yudao.module.system.service.user.AdminUserServiceImpl.updateUser(AdminUserServiceImpl.java:113)
+             	at 
+             //省略    
+             ```
+   
+           - `ExceptionUtils.getStackTrace(e)`:从 Throwable 获取堆栈跟踪.(commons-lang3提供)
+   
+2. 在request的attribute中存储响应结果(供ApiAccessLogFilter使用)
+   1. 使用[全局响应结果（ResponseBody）处理器](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fweb%2Fcore%2Fhandler%2FGlobalResponseBodyHandler.java)进行响应结果存储,便于ApiAccessLogFilter进行读取
+   
+3. 构建Request Body 缓存 Filter，实现它的可重复读取(供ApiAccessLogFilter使用)
+   1. `CacheRequestBodyFilter`:[CacheRequestBodyFilter.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fweb%2Fcore%2Ffilter%2FCacheRequestBodyFilter.java)
+   
+      ```java
+      /**
+       * Request Body 缓存 Filter，实现它的可重复读取
+       *
+       * @author 芋道源码
+       */
+      public class CacheRequestBodyFilter extends OncePerRequestFilter {
+      
+          @Override
+          protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                  throws IOException, ServletException {
+              filterChain.doFilter(new CacheRequestBodyWrapper(request), response);
+          }
+      
+          @Override
+          protected boolean shouldNotFilter(HttpServletRequest request) {
+              // 只处理 json 请求内容
+              return !ServletUtils.isJsonRequest(request);
+          }
+      
+      }
+      
+      ```
+   
+   2. `CacheRequestBodyWrapper`:[CacheRequestBodyFilter.java](yudao-framework%2Fyudao-spring-boot-starter-web%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fweb%2Fcore%2Ffilter%2FCacheRequestBodyFilter.java)
+   
+      ```java
+      /**
+       *  Request Body 缓存 Wrapper
+       *
+       * @author 芋道源码
+       */
+      public class CacheRequestBodyWrapper extends HttpServletRequestWrapper {
+      
+          /**
+           * 缓存的内容
+           */
+          private final byte[] body;
+      
+          public CacheRequestBodyWrapper(HttpServletRequest request) {
+              super(request);
+              body = ServletUtils.getBodyBytes(request);
+          }
+      
+          @Override
+          public BufferedReader getReader() throws IOException {
+              return new BufferedReader(new InputStreamReader(this.getInputStream()));
+          }
+      
+          @Override
+          public ServletInputStream getInputStream() throws IOException {
+              final ByteArrayInputStream inputStream = new ByteArrayInputStream(body);
+              // 返回 ServletInputStream
+              return new ServletInputStream() {
+      
+                  @Override
+                  public int read() {
+                      return inputStream.read();
+                  }
+      
+                  @Override
+                  public boolean isFinished() {
+                      return false;
+                  }
+      
+                  @Override
+                  public boolean isReady() {
+                      return false;
+                  }
+      
+                  @Override
+                  public void setReadListener(ReadListener readListener) {}
+      
+                  @Override
+                  public int available() {
+                      return body.length;
+                  }
+      
+              };
+          }
+      
+      }
+      ```
+   
+      - `CacheRequestBodyWrapper`
+   
+        这段代码定义了一个名为 `CacheRequestBodyWrapper` 的类，它是 `HttpServletRequestWrapper` 的子类。它的主要目的是包装原始的 HTTP 请求，以便在需要时缓存请求体（HTTP请求的主体内容）。这通常在处理请求体多次的情况下有用，因为 HTTP 请求体的数据流通常只能被读取一次。以下是代码的解释：
+   
+        1. `CacheRequestBodyWrapper` 继承自 `HttpServletRequestWrapper`，它是一个装饰器类，用于包装 `HttpServletRequest` 对象，以便在不改变原始请求对象的情况下增强其功能。
+   
+        2. 在构造函数中，它接受一个 `HttpServletRequest` 对象作为参数，并调用 `ServletUtils.getBodyBytes(request)` 方法，将请求体的数据读取到 `body` 字节数组中。这个 `body` 数组将用于缓存请求体数据。
+   
+        3. `getReader()` (读json字符时用)方法被重写，以便返回一个 `BufferedReader` 对象，该对象从包装的输入流中读取数据并提供字符流的读取。
+   
+        4. `getInputStream()` (读文件时yon)方法也被重写，以返回一个自定义的 `ServletInputStream` 对象。这个对象通过 `body` 字节数组提供输入流，允许多次读取请求体数据。这是通过创建一个 `ByteArrayInputStream` 对象并重写 `ServletInputStream` 中的方法来实现的。
+   
+           - `read()` 方法用于读取一个字节的数据。
+           - `isFinished()` 和 `isReady()` 方法通常用于异步处理，这里都返回 `false`。
+           - `setReadListener()` 方法通常用于异步处理，这里没有实现。
+           - `available()` 方法返回缓存的请求体数据的可用字节数。
+   
+        通过使用这个 `CacheRequestBodyWrapper`，你可以在需要多次访问请求体数据时，避免原始请求体数据只能读取一次的限制，而且可以在多个地方访问请求体数据，而不必每次都重新解析和读取请求体。这在某些情况下对性能优化和处理请求体数据的需求非常有用。
+   
+      - `HttpServletRequestWrapper`:
+   
+        `HttpServletRequestWrapper` 是 Java Servlet API 中的一个类，用于包装 `HttpServletRequest` 对象，以便在处理 HTTP 请求时修改或增强请求的功能。它是 Servlet 编程中的一种设计模式，称为装饰器模式，允许你在不改变原始请求对象的情况下，对请求进行定制化的处理。
+   
+        使用 `HttpServletRequestWrapper`，你可以重写或添加方法，以满足你的需求，例如修改请求参数、请求头、URL，或者验证请求数据等。这可以在过滤器中进行，以实现对请求的全局处理，例如安全性检查、日志记录等。
+   
+        以下是一个简单的示例，演示如何使用 `HttpServletRequestWrapper` 来修改请求参数：
+   
+        ```java
+        import javax.servlet.http.HttpServletRequest;
+        import javax.servlet.http.HttpServletRequestWrapper;
+        
+        public class MyHttpServletRequestWrapper extends HttpServletRequestWrapper {
+            public MyHttpServletRequestWrapper(HttpServletRequest request) {
+                super(request);
+            }
+        
+            @Override
+            public String getParameter(String name) {
+                String originalValue = super.getParameter(name);
+                if (name.equals("exampleParam")) {
+                    // 修改名为 "exampleParam" 的参数的值
+                    return "modifiedValue";
+                }
+                return originalValue;
+            }
+        }
+        ```
+   
+        然后，你可以在过滤器中使用这个包装器：
+   
+        ```java
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+                throws IOException, ServletException {
+            if (request instanceof HttpServletRequest) {
+                HttpServletRequest httpRequest = (HttpServletRequest) request;
+                MyHttpServletRequestWrapper wrappedRequest = new MyHttpServletRequestWrapper(httpRequest);
+                // 将修改后的请求对象传递给下一个过滤器或 Servlet
+                chain.doFilter(wrappedRequest, response);
+            } else {
+                chain.doFilter(request, response);
+            }
+        }
+        ```
+   
+        这是一个非常简单的示例，你可以根据需要定制 `HttpServletRequestWrapper` 来满足你的具体要求，例如对请求数据的加密、解密，或者进行其他自定义处理。
+   
+4. 错误日志的处理:
+   - 未处理
+   - 已处理
+   - 已忽略
+5. API日志数据库模型
+
+   ![](.image/ruoyi-vue-pro-API日志.png)
+
+
+
+
+
+
+

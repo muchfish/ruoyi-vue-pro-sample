@@ -92,3 +92,18 @@ logging:
     cn.iocoder.yudao.module.member.dal.mysql: debug
     cn.iocoder.yudao.module.trade.dal.mysql: debug
     cn.iocoder.yudao.module.promotion.dal.mysql: debug
+
+debug: true
+
+--- #################### 芋道相关配置 ####################
+
+# 芋道配置项，设置当前项目所有自定义的配置
+yudao:
+  captcha:
+    enable: true # 本地环境，暂时关闭图片验证码，方便登录等接口的测试；
+  security:
+    mock-enable: false
+  access-log: # 访问日志的配置项
+    enable: true
+  error-code: # 错误码相关配置项
+    enable: true

@@ -1,8 +1,12 @@
 package cn.iocoder.yudao.framework.web.config;
 
+import cn.iocoder.yudao.framework.apilog.core.service.ApiErrorLogFrameworkService;
 import cn.iocoder.yudao.framework.common.enums.WebFilterOrderEnum;
+import cn.iocoder.yudao.framework.web.core.filter.CacheRequestBodyFilter;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
+import cn.iocoder.yudao.framework.web.core.handler.GlobalResponseBodyHandler;
 import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -15,17 +19,23 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.annotation.Resource;
 import javax.servlet.Filter;
-
 
 @AutoConfiguration
 @EnableConfigurationProperties(WebProperties.class)
 public class YudaoWebAutoConfiguration implements WebMvcConfigurer {
 
+    @Resource
+    private WebProperties webProperties;
+    /**
+     * 应用名
+     */
+    @Value("${spring.application.name}")
+    private String applicationName;
 
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        WebProperties webProperties = new WebProperties();
         configurePathMatch(configurer, webProperties.getAdminApi());
         configurePathMatch(configurer, webProperties.getAppApi());
     }
@@ -43,17 +53,21 @@ public class YudaoWebAutoConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
+    public GlobalExceptionHandler globalExceptionHandler(ApiErrorLogFrameworkService ApiErrorLogFrameworkService) {
+        return new GlobalExceptionHandler(applicationName, ApiErrorLogFrameworkService);
+    }
+
+    @Bean
+    public GlobalResponseBodyHandler globalResponseBodyHandler() {
+        return new GlobalResponseBodyHandler();
+    }
+
+    @Bean
     @SuppressWarnings("InstantiationOfUtilityClass")
     public WebFrameworkUtils webFrameworkUtils(WebProperties webProperties) {
         // 由于 WebFrameworkUtils 需要使用到 webProperties 属性，所以注册为一个 Bean
         return new WebFrameworkUtils(webProperties);
     }
-
-    @Bean
-    public GlobalExceptionHandler globalExceptionHandler() {
-        return new GlobalExceptionHandler();
-    }
-
 
     // ========== Filter 相关 ==========
 
@@ -72,6 +86,14 @@ public class YudaoWebAutoConfiguration implements WebMvcConfigurer {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config); // 对接口配置跨域设置
         return createFilterBean(new CorsFilter(source), WebFilterOrderEnum.CORS_FILTER);
+    }
+
+    /**
+     * 创建 RequestBodyCacheFilter Bean，可重复读取请求内容
+     */
+    @Bean
+    public FilterRegistrationBean<CacheRequestBodyFilter> requestBodyCacheFilter() {
+        return createFilterBean(new CacheRequestBodyFilter(), WebFilterOrderEnum.REQUEST_BODY_CACHE_FILTER);
     }
 
     public static <T extends Filter> FilterRegistrationBean<T> createFilterBean(T filter, Integer order) {

@@ -88,12 +88,26 @@ public class ServletUtils {
         return ServletUtil.getClientIP(request);
     }
 
+    // TODO @疯狂：terminal 还是从 ServletUtils 里拿，更容易全局治理；
+
+    public static boolean isJsonRequest(ServletRequest request) {
+        return StrUtil.startWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE);
+    }
+
     public static String getBody(HttpServletRequest request) {
         return ServletUtil.getBody(request);
     }
 
+    public static byte[] getBodyBytes(HttpServletRequest request) {
+        return ServletUtil.getBodyBytes(request);
+    }
+
     public static String getClientIP(HttpServletRequest request) {
         return ServletUtil.getClientIP(request);
+    }
+
+    public static Map<String, String> getParamMap(HttpServletRequest request) {
+        return ServletUtil.getParamMap(request);
     }
 
 }

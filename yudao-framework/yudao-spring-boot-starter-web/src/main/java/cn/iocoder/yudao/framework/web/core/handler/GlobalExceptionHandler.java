@@ -1,11 +1,20 @@
 package cn.iocoder.yudao.framework.web.core.handler;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.apilog.core.service.ApiErrorLog;
+import cn.iocoder.yudao.framework.apilog.core.service.ApiErrorLogFrameworkService;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
+import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.util.Assert;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -20,6 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.*;
 
@@ -33,9 +44,9 @@ import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeC
 @Slf4j
 public class GlobalExceptionHandler {
 
-//    private final String applicationName;
+    private final String applicationName;
 
-//    private final ApiErrorLogFrameworkService apiErrorLogFrameworkService;
+    private final ApiErrorLogFrameworkService apiErrorLogFrameworkService;
 
     /**
      * 处理所有异常，主要是提供给 Filter 使用
@@ -70,15 +81,12 @@ public class GlobalExceptionHandler {
         if (ex instanceof HttpRequestMethodNotSupportedException) {
             return httpRequestMethodNotSupportedExceptionHandler((HttpRequestMethodNotSupportedException) ex);
         }
-//        if (ex instanceof RequestNotPermitted) {
-//            return requestNotPermittedExceptionHandler(request, (RequestNotPermitted) ex);
-//        }
         if (ex instanceof ServiceException) {
             return serviceExceptionHandler((ServiceException) ex);
         }
-//        if (ex instanceof AccessDeniedException) {
-//            return accessDeniedExceptionHandler(request, (AccessDeniedException) ex);
-//        }
+        if (ex instanceof AccessDeniedException) {
+            return accessDeniedExceptionHandler(request, (AccessDeniedException) ex);
+        }
         return defaultExceptionHandler(request, ex);
     }
 
@@ -173,23 +181,22 @@ public class GlobalExceptionHandler {
     /**
      * 处理 Resilience4j 限流抛出的异常
      */
-/*    @ExceptionHandler(value = RequestNotPermitted.class)
-    public CommonResult<?> requestNotPermittedExceptionHandler(HttpServletRequest req, RequestNotPermitted ex) {
+    public CommonResult<?> requestNotPermittedExceptionHandler(HttpServletRequest req, Throwable ex) {
         log.warn("[requestNotPermittedExceptionHandler][url({}) 访问过于频繁]", req.getRequestURL(), ex);
         return CommonResult.error(TOO_MANY_REQUESTS);
-    }*/
+    }
 
     /**
      * 处理 Spring Security 权限不足的异常
      *
      * 来源是，使用 @PreAuthorize 注解，AOP 进行权限拦截
      */
-/*    @ExceptionHandler(value = AccessDeniedException.class)
+    @ExceptionHandler(value = AccessDeniedException.class)
     public CommonResult<?> accessDeniedExceptionHandler(HttpServletRequest req, AccessDeniedException ex) {
         log.warn("[accessDeniedExceptionHandler][userId({}) 无法访问 url({})]", WebFrameworkUtils.getLoginUserId(req),
                 req.getRequestURL(), ex);
         return CommonResult.error(FORBIDDEN);
-    }*/
+    }
 
     /**
      * 处理业务异常 ServiceException
@@ -213,15 +220,20 @@ public class GlobalExceptionHandler {
             return tableNotExistsResult;
         }
 
-        // 情况二：处理异常
+        // 情况二：部分特殊的库的处理
+//        if (Objects.equals("io.github.resilience4j.ratelimiter.RequestNotPermitted", ex.getClass().getName())) {
+//            return requestNotPermittedExceptionHandler(req, ex);
+//        }
+
+        // 情况三：处理异常
         log.error("[defaultExceptionHandler]", ex);
         // 插入异常日志
-//        this.createExceptionLog(req, ex);
+        this.createExceptionLog(req, ex);
         // 返回 ERROR CommonResult
         return CommonResult.error(INTERNAL_SERVER_ERROR.getCode(), INTERNAL_SERVER_ERROR.getMsg());
     }
 
-  /*  private void createExceptionLog(HttpServletRequest req, Throwable e) {
+    private void createExceptionLog(HttpServletRequest req, Throwable e) {
         // 插入错误日志
         ApiErrorLog errorLog = new ApiErrorLog();
         try {
@@ -232,9 +244,9 @@ public class GlobalExceptionHandler {
         } catch (Throwable th) {
             log.error("[createExceptionLog][url({}) log({}) 发生异常]", req.getRequestURI(),  JsonUtils.toJsonString(errorLog), th);
         }
-    }*/
+    }
 
-    /*private void initExceptionLog(ApiErrorLog errorLog, HttpServletRequest request, Throwable e) {
+    private void initExceptionLog(ApiErrorLog errorLog, HttpServletRequest request, Throwable e) {
         // 处理用户信息
         errorLog.setUserId(WebFrameworkUtils.getLoginUserId(request));
         errorLog.setUserType(WebFrameworkUtils.getLoginUserType(request));
@@ -251,7 +263,7 @@ public class GlobalExceptionHandler {
         errorLog.setExceptionMethodName(stackTraceElement.getMethodName());
         errorLog.setExceptionLineNumber(stackTraceElement.getLineNumber());
         // 设置其它字段
-        errorLog.setTraceId(TracerUtils.getTraceId());
+        errorLog.setTraceId("");// TODO: 2/11/2023  trace
         errorLog.setApplicationName(applicationName);
         errorLog.setRequestUrl(request.getRequestURI());
         Map<String, Object> requestParams = MapUtil.<String, Object>builder()
@@ -262,7 +274,7 @@ public class GlobalExceptionHandler {
         errorLog.setUserAgent(ServletUtils.getUserAgent(request));
         errorLog.setUserIp(ServletUtils.getClientIP(request));
         errorLog.setExceptionTime(LocalDateTime.now());
-    }*/
+    }
 
     /**
      * 处理 Table 不存在的异常情况
