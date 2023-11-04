@@ -201,6 +201,12 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
                 <version>${redisson.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-actuator</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- 消息队列相关 -->
@@ -227,6 +233,22 @@
                 <version>${opentracing.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-starter-server</artifactId> <!-- 实现 Spring Boot Admin Server 服务端 -->
+                <version>${spring-boot-admin.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>de.codecentric</groupId>
+                        <artifactId>spring-boot-admin-server-cloud</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-starter-client</artifactId> <!-- 实现 Spring Boot Admin Server 服务端 -->
+                <version>${spring-boot-admin.version}</version>
+            </dependency>
             <!-- 工具类相关 -->
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>

@@ -2869,6 +2869,102 @@
 
 
 
+#### Java 监控---Spring Boot Admin
+
+1. 引入依赖
+
+   ```xml
+               <dependency>
+                   <groupId>de.codecentric</groupId>
+                   <artifactId>spring-boot-admin-starter-server</artifactId> <!-- 实现 Spring Boot Admin Server 服务端 -->
+                   <version>${spring-boot-admin.version}</version>
+                   <exclusions>
+                       <exclusion>
+                           <groupId>de.codecentric</groupId>
+                           <artifactId>spring-boot-admin-server-cloud</artifactId>
+                       </exclusion>
+                   </exclusions>
+               </dependency>
+               <dependency>
+                   <groupId>de.codecentric</groupId>
+                   <artifactId>spring-boot-admin-starter-client</artifactId> <!-- 实现 Spring Boot Admin Server 服务端 -->
+                   <version>${spring-boot-admin.version}</version>
+               </dependency>
+   ```
+
+2. yaml配置
+
+   ```yaml
+   
+   --- #################### 监控相关配置 ####################
+   
+   # Actuator 监控端点的配置项
+   management:
+     endpoints:
+       web:
+         base-path: /actuator # Actuator 提供的 API 接口的根目录。默认为 /actuator
+         exposure:
+           include: '*' # 需要开放的端点。默认值只打开 health 和 info 两个端点。通过设置 * ，可以开放所有端点。
+   
+   # Spring Boot Admin 配置项
+   spring:
+     boot:
+       admin:
+         # Spring Boot Admin Client 客户端的相关配置
+         client:
+           url: http://127.0.0.1:${server.port}/${spring.boot.admin.context-path} # 设置 Spring Boot Admin Server 地址
+           instance:
+             service-host-type: IP # 注册实例时，优先使用 IP [IP, HOST_NAME, CANONICAL_HOST_NAME]
+         # Spring Boot Admin Server 服务端的相关配置
+         context-path: /admin # 配置 Spring
+   ```
+
+3. 开启AdminServer
+
+   ```java
+   @Configuration(proxyBeanMethods = false)
+   @EnableAdminServer
+   public class AdminServerConfiguration {
+   }
+   ```
+
+4. 开启Admin Client
+
+   ```xml
+           <dependency>
+               <groupId>de.codecentric</groupId>
+               <artifactId>spring-boot-admin-starter-client</artifactId>
+           </dependency>
+   ```
+
+5. spring security允许匿名访问
+
+   ```java
+   @Value("${spring.boot.admin.context-path:''}")
+   private String adminSeverContextPath;  
+   
+   @Bean("infraAuthorizeRequestsCustomizer")
+   public AuthorizeRequestsCustomizer authorizeRequestsCustomizer() {
+       return new AuthorizeRequestsCustomizer() {
+   
+           @Override
+           public void customize(ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry registry) {
+               // Spring Boot Actuator 的安全配置
+               registry.antMatchers("/actuator").anonymous()
+                       .antMatchers("/actuator/**").anonymous();
+               // Spring Boot Admin Server 的安全配置
+               registry.antMatchers(adminSeverContextPath).anonymous()
+                       .antMatchers(adminSeverContextPath + "/**").anonymous();
+           }
+   
+       };
+   }
+   ```
+
+   
+
+
+
 
 
 
