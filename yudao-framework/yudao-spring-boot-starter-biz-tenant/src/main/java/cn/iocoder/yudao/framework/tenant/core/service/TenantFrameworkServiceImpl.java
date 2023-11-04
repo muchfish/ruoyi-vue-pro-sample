@@ -23,7 +23,19 @@ public class TenantFrameworkServiceImpl implements TenantFrameworkService {
 
     private final TenantApi tenantApi;
 
+    /**
+     * 针对 {@link #getTenantIds()} 的缓存
+     */
+    private final LoadingCache<Object, List<Long>> getTenantIdsCache = CacheUtils.buildAsyncReloadingCache(
+            Duration.ofMinutes(1L), // 过期时间 1 分钟
+            new CacheLoader<Object, List<Long>>() {
 
+                @Override
+                public List<Long> load(Object key) {
+                    return tenantApi.getTenantIdList();
+                }
+
+            });
 
     /**
      * 针对 {@link #validTenant(Long)} 的缓存
@@ -44,6 +56,11 @@ public class TenantFrameworkServiceImpl implements TenantFrameworkService {
 
             });
 
+    @Override
+    @SneakyThrows
+    public List<Long> getTenantIds() {
+        return getTenantIdsCache.get(Boolean.TRUE);
+    }
 
     @Override
     public void validTenant(Long id) {

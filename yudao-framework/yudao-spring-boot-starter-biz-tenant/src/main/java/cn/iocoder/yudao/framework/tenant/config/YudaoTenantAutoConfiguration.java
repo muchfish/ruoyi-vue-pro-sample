@@ -2,8 +2,9 @@ package cn.iocoder.yudao.framework.tenant.config;
 
 import cn.iocoder.yudao.framework.common.enums.WebFilterOrderEnum;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
+import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnoreAspect;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
-import cn.iocoder.yudao.framework.tenant.core.mq.TenantRedisMessageInterceptor;
+import cn.iocoder.yudao.framework.tenant.core.job.TenantJobAspect;
 import cn.iocoder.yudao.framework.tenant.core.security.TenantSecurityWebFilter;
 import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkServiceImpl;
@@ -27,6 +28,13 @@ public class YudaoTenantAutoConfiguration {
     @Bean
     public TenantFrameworkService tenantFrameworkService(TenantApi tenantApi) {
         return new TenantFrameworkServiceImpl(tenantApi);
+    }
+
+    // ========== AOP ==========
+
+    @Bean
+    public TenantIgnoreAspect tenantIgnoreAspect() {
+        return new TenantIgnoreAspect();
     }
 
     // ========== DB ==========
@@ -67,8 +75,14 @@ public class YudaoTenantAutoConfiguration {
 
     // ========== MQ ==========
 
+
+    // ========== Job ==========
+
     @Bean
-    public TenantRedisMessageInterceptor tenantRedisMessageInterceptor() {
-        return new TenantRedisMessageInterceptor();
+    public TenantJobAspect tenantJobAspect(TenantFrameworkService tenantFrameworkService) {
+        return new TenantJobAspect(tenantFrameworkService);
     }
+
+    // ========== Redis ==========
+
 }

@@ -32,5 +32,21 @@ public class TenantUtils {
         }
     }
 
+    /**
+     * 忽略租户，执行对应的逻辑
+     *
+     * @param runnable 逻辑
+     */
+    public static void executeIgnore(Runnable runnable) {
+        Boolean oldIgnore = TenantContextHolder.isIgnore();
+        try {
+            TenantContextHolder.setIgnore(true);
+            // 执行逻辑
+            runnable.run();
+        } finally {
+            TenantContextHolder.setIgnore(oldIgnore);
+        }
+    }
+
 
 }

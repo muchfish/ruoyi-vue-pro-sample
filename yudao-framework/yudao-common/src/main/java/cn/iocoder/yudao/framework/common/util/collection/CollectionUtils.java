@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.framework.common.util.collection;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ArrayUtil;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.*;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
 
 /**
  * Collection 工具类
@@ -17,6 +19,9 @@ import java.util.stream.Collectors;
  */
 public class CollectionUtils {
 
+    public static boolean containsAny(Object source, Object... targets) {
+        return asList(targets).contains(source);
+    }
 
     public static <T> List<T> filterList(Collection<T> from, Predicate<T> predicate) {
         if (CollUtil.isEmpty(from)) {
@@ -99,6 +104,10 @@ public class CollectionUtils {
             return new HashMap<>();
         }
         return from.stream().collect(Collectors.toMap(keyFunc, valueFunc, mergeFunction, supplier));
+    }
+
+    public static boolean containsAny(Collection<?> source, Collection<?> candidates) {
+        return org.springframework.util.CollectionUtils.containsAny(source, candidates);
     }
 
     public static <T> T findFirst(List<T> from, Predicate<T> predicate) {

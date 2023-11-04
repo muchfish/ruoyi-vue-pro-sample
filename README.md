@@ -2961,9 +2961,261 @@
    }
    ```
 
+
+
+#### 定时任务
+
+1. Quartz作业调度框架(前置知识)
+
+   1. Quartz其中的核心类和执行流程
+
+      Quartz的核心类和执行流程涉及多个关键概念和组件。以下是其中一些核心类以及执行流程的简要描述：
+
+      **核心类：**
+
+      1. **Scheduler（调度器）**：Scheduler是Quartz的核心组件，负责触发和执行作业。它是整个调度系统的控制中心，用于安排作业的执行。Scheduler可以创建、删除、暂停和恢复作业，并提供了对作业的管理接口。
+
+      2. **Job（作业）**：Job是您要执行的任务的抽象表示。您需要实现Job接口并编写具体的任务逻辑。每个Job都有一个关联的JobDetail对象，它包含有关Job的详细信息，如Job的名称、组别、描述等。
+
+      3. **Trigger（触发器）**：Trigger用于定义作业的执行时机。它指定了作业何时执行，可以基于简单的时间间隔、Cron表达式或日历规则触发作业的执行。Quartz提供了不同类型的Trigger，包括SimpleTrigger和CronTrigger。
+
+      4. **JobDetail（作业详情）**：JobDetail包含有关特定作业的详细信息，包括作业类的引用、作业的名称和组别等。每个Job都需要关联一个JobDetail，以便Scheduler知道要执行哪个Job。
+
+      5. **JobExecutionContext（作业执行上下文）**：在作业执行时，Quartz会将一个JobExecutionContext对象传递给Job，其中包含了有关作业执行的信息，如作业的名称、触发器的信息、Scheduler的引用等。Job可以使用这个上下文来访问和操作执行环境。
+
+      **执行流程：**
+
+      1. **创建和配置调度器**：首先，您需要创建一个Scheduler实例，并配置它。配置包括设置调度器的属性、添加作业和触发器、定义作业的详细信息等。
+
+      2. **定义作业和触发器**：您需要创建Job和Trigger的实例，并将它们与JobDetail相关联。Trigger定义了作业的执行时机，可以是SimpleTrigger或CronTrigger，根据您的需求选择。
+
+      3. **将作业和触发器添加到调度器**：将JobDetail和Trigger添加到调度器中，使它们能够被调度器管理和执行。
+
+      4. **启动调度器**：一旦配置完成，您需要启动调度器，它会开始根据触发器的定义来执行作业。
+
+      5. **作业执行**：根据触发器的触发条件，Scheduler会选择相应的作业，并执行它们。在执行过程中，Job可以访问作业执行上下文，执行特定的任务逻辑。
+
+      6. **监控和管理**：您可以使用Quartz提供的监控和管理工具来实时监视作业的执行情况、触发器的状态，并进行手动操作，如暂停、恢复或删除作业。
+
+      7. **停止调度器**：当不再需要调度作业时，可以停止调度器，以释放资源和停止作业的执行。
+
+      这是Quartz的核心类和执行流程的简要概述。Quartz提供了更复杂的特性和选项，以满足各种调度需求，但以上所述是基本的工作原理。
+
+   2. `JobStore`
+
+      JobStore 是 Quartz 调度框架中的一个关键组件，它负责管理和存储作业（Job）和触发器（Trigger）的信息，实现了作业的持久性和可靠的调度。JobStore 的主要作用包括：
+
+      1. **持久性存储**：JobStore 将作业和触发器的信息存储在数据库中，这意味着即使应用程序关闭或重启，调度器的信息仍然得以保留。这是实现作业持久性的关键，因为作业的调度信息需要在应用程序生命周期内存储并恢复。
+
+      2. **集群支持**：JobStore 可以支持分布式的集群部署，多个 Quartz 调度器实例可以共享相同的数据库，以便在多个节点上协同执行作业。JobStore 负责协调不同节点上的调度器，确保作业不会重复执行，同时实现负载均衡。
+
+      3. **作业调度管理**：JobStore 负责跟踪触发器和作业之间的关联关系，以确保触发器按照预定的时间表执行相关的作业。它管理触发器的触发状态、上次触发时间和下次触发时间等信息。
+
+      4. **触发器状态维护**：JobStore 负责维护触发器的状态，包括触发器的状态（如等待、运行中、暂停等）以及触发器的错过触发处理。这确保触发器的行为是可控和可管理的。
+
+      5. **作业执行历史记录**：JobStore 可以记录作业执行的历史信息，包括成功执行、失败执行、触发时间等。这有助于监控和审计作业的执行情况。
+
+      Quartz 提供了不同的 JobStore 实现，包括 RAMJobStore、JDBCJobStore 和 TerracottaJobStore，您可以根据应用程序的需求选择适合的 JobStore 实现。不同的 JobStore 实现可以使用不同的持久性存储方式（内存、数据库、分布式存储等），但它们都实现了相同的接口，以提供一致的调度功能。 JobStore 是 Quartz 调度框架的核心组件之一，确保了调度器的可靠性、持久性和高可用性。
+
+   3. Quartz各个表结构的关系
+
+      Quartz 调度器使用数据库来存储调度信息，以便支持作业的持久性和集群部署。它定义了多个数据库表来管理不同方面的调度信息，这些表之间有着特定的关系。以下是Quartz数据库表结构之间的关系：
+
+      1. **QRTZ_SCHEDULER_STATE表**：该表存储调度器的状态信息，如调度器的名称、调度器实例的标识符、调度器实例的版本等。这个表通常只有一行记录。
+
+      2. **QRTZ_TRIGGERS表**：Triggers表存储所有的触发器信息，包括触发器的名称、组别、作业的关联、触发器的类型（SimpleTrigger或CronTrigger）等。它与作业之间存在一对多的关系，因为一个作业可以有多个触发器。
+
+      3. **QRTZ_SIMPLE_TRIGGERS表**：如果触发器是SimpleTrigger类型的，那么触发器的详细信息将存储在这个表中，包括重复计数、重复间隔等。
+
+      4. **QRTZ_CRON_TRIGGERS表**：如果触发器是CronTrigger类型的，那么CronTrigger的表达式将存储在这个表中。
+
+      5. **QRTZ_JOB_DETAILS表**：JobDetails表存储了作业的详细信息，包括作业的名称、组别、作业类、作业描述等。它与触发器之间存在一对多的关系，因为一个作业可以关联多个触发器。
+
+      6. **QRTZ_JOB_LISTENERS表**：这个表存储作业监听器的信息，它定义了与作业关联的监听器，以便在作业执行时触发监听器的事件。
+
+      7. **QRTZ_TRIGGER_LISTENERS表**：与作业监听器类似，这个表存储触发器监听器的信息，以便在触发器触发时触发监听器的事件。
+
+      8. **QRTZ_CAL_TRIGGERS表**：这个表存储与日历相关的触发器的信息，用于指定触发器的调度时间。通常，它们与CronTrigger一起使用。
+
+      9. **QRTZ_PAUSED_TRIGGER_GRPS表**：这个表用于存储被暂停的触发器组的信息。
+
+      10. **QRTZ_PAUSED_JOB_GROUPS表**：类似于暂停的触发器组，这个表用于存储被暂停的作业组的信息。
+
+      11. **QRTZ_LOCKS表**：该表用于协调多个调度器实例之间的操作，以确保在集群环境下只有一个调度器实例能够执行给定的任务。
+
+      这些表之间的关系构成了Quartz调度器的持久性存储结构，使其能够在不同的调度器实例之间共享调度信息，并在重启后保持一致的状态。这些表和关系使Quartz能够有效地进行作业调度和管理，无论是在单机还是分布式的环境中。
+
+2. 创建job组件
+
+   1. 引入quartz依赖:[yudao-spring-boot-starter-job](yudao-framework%2Fyudao-spring-boot-starter-job)
+
+      ```xml
+              <dependency>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-starter-quartz</artifactId>
+              </dependency>
+      ```
+
+   2. 配置quartz配置
+
+      ```yaml
+      --- #################### 定时任务相关配置 ####################
+      
+      # Quartz 配置项，对应 QuartzProperties 配置类
+      spring:
+        quartz:
+          auto-startup: true # 本地开发环境，尽量不要开启 Job
+          scheduler-name: schedulerName # Scheduler 名字。默认为 schedulerName
+          job-store-type: jdbc # Job 存储器类型。默认为 memory 表示内存，可选 jdbc 使用数据库。
+          wait-for-jobs-to-complete-on-shutdown: true # 应用关闭时，是否等待定时任务执行完成。默认为 false ，建议设置为 true
+          properties: # 添加 Quartz Scheduler 附加属性，更多可以看 http://www.quartz-scheduler.org/documentation/2.4.0-SNAPSHOT/configuration.html 文档
+            org:
+              quartz:
+                # Scheduler 相关配置
+                scheduler:
+                  instanceName: schedulerName
+                  instanceId: AUTO # 自动生成 instance ID
+                # JobStore 相关配置
+                jobStore:
+                  # JobStore 实现类。可见博客：https://blog.csdn.net/weixin_42458219/article/details/122247162
+                  class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+                  isClustered: true # 是集群模式
+                  clusterCheckinInterval: 15000 # 集群检查频率，单位：毫秒。默认为 15000，即 15 秒
+                  misfireThreshold: 60000 # misfire 阀值，单位：毫秒。
+                # 线程池相关配置
+                threadPool:
+                  threadCount: 25 # 线程池大小。默认为 10 。
+                  threadPriority: 5 # 线程优先级
+                  class: org.quartz.simpl.SimpleThreadPool # 线程池类型
+          jdbc: # 使用 JDBC 的 JobStore 的时候，JDBC 的配置
+            initialize-schema: NEVER # 是否自动使用 SQL 初始化 Quartz 表结构。这里设置成 never ，我们手动创建表结构。
+      
+      ```
+
+   3. 核心代码
+
+      1. [SchedulerManager.java](yudao-framework%2Fyudao-spring-boot-starter-job%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fquartz%2Fcore%2Fscheduler%2FSchedulerManager.java)
+         - `org.quartz.Scheduler`的管理器，负责管理任务
+           - 添加 Job 到 Quartz 中
+           - 更新 Job 到 Quartz
+           - 删除 Quartz 中的 Job
+           - 暂停 Quartz 中的 Job
+           - 启动 Quartz 中的 Job
+           - 立即触发一次 Quartz 中的 Job
+         - 使用 `jobHandlerName` 属性作为唯一标识
+           - `jobDetail`的唯一标识为`jobHandlerName`
+           - `Trigger`的唯一标识为`jobHandlerName`
+           - jobHandlerName 对应到`任务处理器JobHandler` Spring Bean 的名字，可以直接调用
+         
+      2. [JobHandlerInvoker.java](yudao-framework%2Fyudao-spring-boot-starter-job%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fquartz%2Fcore%2Fhandler%2FJobHandlerInvoker.java)
+         - 是一个`Job`
+         
+         - 负责调用`JobHandler`(执行任务)
+         
+         - 负责记录任务日志
+         
+         - 辅助参数(辅助任务执行)
+           - refireCount:第几次执行
+           - retryCount:最大重试次数
+           - retryInterval:每次重试间隔
+           - jobHandlerName:`JobHandler`的bean名称
+           - jobHandlerParam:任务参数,也是`JobHandler`的`execute`方法的参数
+           
+         - `@DisallowConcurrentExecution`
+         
+           `@DisallowConcurrentExecution` 是一个注解（Annotation），通常用于标记 Quartz 作业（Job）类，以确保同一个作业实例不会同时并发执行。这个注解的作用是防止多个触发器同时触发同一个作业实例，从而<font color="gold">**避免并发执行**</font>的情况。
+         
+           在 Quartz 中，默认情况下，如果一个触发器触发了一个作业，而该作业的执行时间较长，那么当下一个触发器触发同一个作业时，Quartz 会创建一个新的作业实例来处理这次触发。这可能导致多个作业实例并发执行同一个作业。
+         
+           使用 `@DisallowConcurrentExecution` 注解可以解决这个问题，它告诉 Quartz 不要同时执行同一个作业实例，即使多个触发器触发了它。当一个触发器触发作业时，如果前一个作业实例还在执行，新的触发器会等待前一个作业完成后再执行。这确保了作业实例的互斥执行，避免了并发执行导致的潜在问题。
+         
+           示例：
+         
+           ```java
+           import org.quartz.DisallowConcurrentExecution;
+           import org.quartz.Job;
+           import org.quartz.JobExecutionContext;
+           import org.quartz.JobExecutionException;
+           
+           @DisallowConcurrentExecution
+           public class MyJob implements Job {
+               @Override
+               public void execute(JobExecutionContext context) throws JobExecutionException {
+                   // 作业逻辑
+               }
+           }
+           ```
+         
+           在上面的示例中，`@DisallowConcurrentExecution` 注解被添加到 `MyJob` 类上，这意味着不会出现多个触发器同时触发 `MyJob` 实例的情况。如果前一个触发器触发了 `MyJob`，而 `MyJob` 的执行时间较长，后续触发器会等待前一个执行完成后再执行。
+         
+           这个注解通常用于确保作业实例的独占性，特别是当作业逻辑具有并发问题或资源竞争时，使用 `@DisallowConcurrentExecution` 可以确保作业的安全执行。
+         
+         - `@PersistJobDataAfterExecution`
+         
+           `@PersistJobDataAfterExecution` 是一个注解（Annotation），通常用于标记 Quartz 作业（Job）类，以指示 Quartz 在<font color="gold">**每次作业执行后持久化作业数据**</font>，即在每次作业执行后更新作业数据。
+         
+           通常，Quartz <font color="gold">**允许作业实例关联一些数据**</font>，这些数据可以在作业执行过程中使用。这些数据可以存储在作业实例的 JobDataMap 中，而 `@PersistJobDataAfterExecution` 注解的作用是告诉 Quartz 在每次作业执行后，将 JobDataMap 中的数据持久化到数据库中，以确保在下次执行作业时，这些数据依然是最新的。
+         
+           使用 `@PersistJobDataAfterExecution` 注解的主要作用包括：
+         
+           1. **持久化作业数据**：在每次作业执行后，JobDataMap 中的数据将被保存到 Quartz 数据库中，以确保作业的状态和数据持久化。这对于需要跟踪作业执行状态或存储作业的执行历史非常有用。
+         
+           2. **动态参数更新**：通过持久化作业数据，您可以在不停止 Quartz 调度器的情况下更新作业的参数。这允许您在运行时修改作业的参数，而不需要修改触发器或作业的配置。
+         
+           示例：
+         
+           ```java
+           import org.quartz.PersistJobDataAfterExecution;
+           import org.quartz.Job;
+           import org.quartz.JobDataMap;
+           import org.quartz.JobExecutionContext;
+           import org.quartz.JobExecutionException;
+           
+           @PersistJobDataAfterExecution
+           public class MyJob implements Job {
+               @Override
+               public void execute(JobExecutionContext context) throws JobExecutionException {
+                   JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
+                   
+                   // 获取作业参数
+                   String parameter = jobDataMap.getString("parameter");
+                   
+                   // 执行作业逻辑
+                   System.out.println("Job is running with parameter: " + parameter);
+                   
+                   // 更新作业参数
+                   jobDataMap.put("parameter", "UpdatedParameter");
+               }
+           }
+           ```
+         
+           在上面的示例中，`@PersistJobDataAfterExecution` 注解被添加到 `MyJob` 类上，以指示 Quartz 在每次执行后持久化作业数据。在作业的 `execute` 方法中，我们可以获取作业参数、执行作业逻辑，然后更新参数。更新后的参数将在下次执行作业时使用，而不需要修改触发器或作业的配置。
+         
+           这个注解非常有用，特别是在需要动态管理和更新作业参数时，以及需要跟踪作业状态和执行历史时。
+         
+      3. [JobHandler.java](yudao-framework%2yudao-spring-boot-starter-job%2src%2main%2java%2cn%2iocoder%2yudao%2framework%2quartz%2core%2handler%2JobHandler.java) 
+         
+         - 任务处理器,包含具体任务的执行逻辑
+         - 一个接口,有业务方进行具体实现
+         - 会被`JobHandlerInvoker`进行调用
+         - 各个业务的`JobHandler`
+           1. [DemoJob.java](yudao-module-system%2yudao-module-system-biz%2src%2main%2java%2cn%2iocoder%2yudao%2module%2system%2job%2DemoJob.java) 
+           2. [AccessLogCleanJob.java](yudao-module-infra%2yudao-module-infra-biz%2src%2main%2java%2cn%2iocoder%2yudao%2module%2infra%2job%2logger%2AccessLogCleanJob.java) :物理删除 N 天前的访问日志的 Job
+           3. [ErrorLogCleanJob.java](yudao-module-infra%2Fyudao-module-infra-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Finfra%2Fjob%2Flogger%2FErrorLogCleanJob.java):物理删除 N 天前的错误日志的 Job
+           4. [JobLogCleanJob.java](yudao-module-infra%2Fyudao-module-infra-biz%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fmodule%2Finfra%2Fjob%2Fjob%2FJobLogCleanJob.java):物理删除 N 天前的任务日志的 Job
+
+3. 管理后台定时任务和定时任务日志crud
+
+4. 管理后台定时任务数据库模型
    
-
-
+   ![](.image/ruoyi-vue-pro-定时任务.png)
+   
+5. 租户组件对job的适配
+   1. 忽略多租户的 Aspect
+      - 基于 TenantIgnore 注解实现，用于一些全局忽略多租户的逻辑.比如`AccessLogCleanJob`
+   2. 多租户 Aspect
+      - 多租户 JobHandler AOP 任务执行时，会按照租户逐个执行 Job 的逻辑 
+      - 注意，需要保证 JobHandler 的幂等性。因为 Job 因为某个租户执行失败重试时，之前执行成功的租户也会再次执行。(被AOP catch掉了异常,因此某个租户执行失败后不会发生重试)
 
 
 

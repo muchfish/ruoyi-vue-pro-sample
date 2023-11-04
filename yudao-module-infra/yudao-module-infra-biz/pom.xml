@@ -64,7 +64,10 @@
         <!-- Config 配置中心相关 -->
 
         <!-- Job 定时任务相关 -->
-
+        <dependency>
+            <groupId>cn.iocoder.boot</groupId>
+            <artifactId>yudao-spring-boot-starter-job</artifactId>
+        </dependency>
 
         <!-- 消息队列相关 -->
         <dependency>
