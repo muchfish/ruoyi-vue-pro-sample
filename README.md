@@ -2842,3 +2842,34 @@
       - chain.doFilter(request, response);为什么不写在最后面的位置
    
         - `chain.doFilter(request, response)`写在`doFilterInternal`方法最后面,起不到去除广告的功能.<font color="gold">原因未知</font>
+
+#### Redis 监控
+
+1. 获取Redis监控信息
+
+   ```java
+       @GetMapping("/get-monitor-info")
+       @Operation(summary = "获得 Redis 监控信息")
+       @PreAuthorize("@ss.hasPermission('infra:redis:get-monitor-info')")
+       public CommonResult<RedisMonitorRespVO> getRedisMonitorInfo() {
+           // 获得 Redis 统计信息
+           Properties info = stringRedisTemplate.execute((RedisCallback<Properties>) RedisServerCommands::info);
+           Long dbSize = stringRedisTemplate.execute(RedisServerCommands::dbSize);
+           Properties commandStats = stringRedisTemplate.execute((
+                   RedisCallback<Properties>) connection -> connection.info("commandstats"));
+           assert commandStats != null; // 断言，避免警告
+           // 拼接结果返回
+           return success(RedisConvert.INSTANCE.build(info, dbSize, commandStats));
+       }
+   ```
+
+   - `info`:Redis info 指令结果,具体字段，查看 Redis 文档
+   - `dbSize`:Redis key 数量
+   - `commandStats`:Redis 命令统计信息,包括命令执行次数、执行时间
+
+
+
+
+
+
+
