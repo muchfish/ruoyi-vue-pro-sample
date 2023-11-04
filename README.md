@@ -2756,6 +2756,89 @@
 
 #### MySQL 监控
 
+1. 开启Druid的监控统计功能
 
+   ```yaml
+   spring:
+     # 数据源配置项
+     datasource:
+       druid: # Druid 【监控】相关的全局配置
+         web-stat-filter: #ruoyi-vue-pro自定义的广告过滤器
+           enabled: true
+         stat-view-servlet: #Druid的监控统计功能过滤器
+           enabled: true #开启Druid的监控统计功能页面
+           allow: # 设置IP白名单，不填则允许所有访问
+           deny: 127.0.0.1 # IP 黑名单，若白名单也存在，则优先使用
+           url-pattern: /druid/* #配置druid管理后台的访问路径 e.g.: /aa/* 则访问路径为: http://localhost:48080/aa/index.html
+           reset-enable: false # 禁用 HTML 中 Reset All 按钮
+           login-username:  root # 控制台管理用户名和密码
+           login-password:  123456
+   ```
 
+2. 过滤掉druid的广告
 
+   1. 指定`DruidAdRemoveFilter`过滤器拦截`/druid/js/common.js`请求
+
+      ```java
+          /**
+           * 创建 DruidAdRemoveFilter 过滤器，过滤 common.js 的广告
+           */
+          @Bean
+          @ConditionalOnProperty(name = "spring.datasource.druid.web-stat-filter.enabled", havingValue = "true")
+          public FilterRegistrationBean<DruidAdRemoveFilter> druidAdRemoveFilterFilter(DruidStatProperties properties) {
+              // 获取 druid web 监控页面的参数
+              DruidStatProperties.StatViewServlet config = properties.getStatViewServlet();
+              // 提取 common.js 的配置路径
+              String pattern = config.getUrlPattern() != null ? config.getUrlPattern() : "/druid/*";
+              String commonJsPattern = pattern.replaceAll("\\*", "js/common.js");
+              // 创建 DruidAdRemoveFilter Bean
+              FilterRegistrationBean<DruidAdRemoveFilter> registrationBean = new FilterRegistrationBean<>();
+              registrationBean.setFilter(new DruidAdRemoveFilter());
+              registrationBean.addUrlPatterns(commonJsPattern);
+              return registrationBean;
+          }
+      ```
+
+   2. [Druid 底部广告过滤器`DruidAdRemoveFilter`](yudao-framework%2Fyudao-spring-boot-starter-mybatis%2Fsrc%2Fmain%2Fjava%2Fcn%2Fiocoder%2Fyudao%2Fframework%2Fdatasource%2Fcore%2Ffilter%2FDruidAdRemoveFilter.java)
+   
+      ```java
+      /**
+       * Druid 底部广告过滤器
+       *
+       * @author 芋道源码
+       */
+      public class DruidAdRemoveFilter extends OncePerRequestFilter {
+      
+          /**
+           * common.js 的路径
+           */
+          private static final String COMMON_JS_ILE_PATH = "support/http/resources/js/common.js";
+      
+          @Override
+          protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+                  throws ServletException, IOException {
+              chain.doFilter(request, response);
+              // 重置缓冲区，响应头不会被重置
+              response.resetBuffer();
+              // 获取 common.js
+              String text = Utils.readFromResource(COMMON_JS_ILE_PATH);
+              // 正则替换 banner, 除去底部的广告信息
+              text = text.replaceAll("<a.*?banner\"></a><br/>", "");
+              text = text.replaceAll("powered.*?shrek.wang</a>", "");
+              response.getWriter().write(text);
+          }
+      
+      }
+      ```
+   
+      - esponse.resetBuffer();这行代码的作用
+   
+        `response.resetBuffer()` 是用于重置响应缓冲区的方法。在Servlet中，HTTP响应的内容通常是通过响应缓冲区来构建的，然后一次性发送给客户端。这个缓冲区允许在生成响应时将内容暂时存储，以便在后续的处理过程中进行修改或处理。
+   
+        `response.resetBuffer()` 的作用是<font color="gold">清空响应缓冲区中的任何先前内容</font>，以确保后续的响应内容将从头开始构建。这通常用于在过滤器或Servlet中进行响应内容的修改，以避免旧内容与新内容混合在一起。
+   
+        在给定的代码中，`response.resetBuffer()` 被用于重置响应缓冲区，以便在后续代码中修改 `text` 变量的内容，并将修改后的内容写入响应，而不会受到之前可能存在的任何响应内容的干扰。这是因为 `doFilterInternal` 方法可能被多个过滤器链式调用，每个过滤器都可以操作响应内容，因此需要确保每个过滤器在操作响应内容时有一个干净的起点。
+   
+      - chain.doFilter(request, response);为什么不写在最后面的位置
+   
+        - `chain.doFilter(request, response)`写在`doFilterInternal`方法最后面,起不到去除广告的功能.<font color="gold">原因未知</font>

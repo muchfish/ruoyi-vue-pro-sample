@@ -11,14 +11,16 @@ spring:
       - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration # 排除积木报表带来的 MongoDB 的自动配置
   datasource:
     druid: # Druid 【监控】相关的全局配置
-      web-stat-filter:
+      web-stat-filter: #ruoyi-vue-pro自定义的广告过滤器
         enabled: true
       stat-view-servlet:
-        enabled: true
-        allow: # 设置白名单，不填则允许所有访问
-        url-pattern: /druid/*
-        login-username: # 控制台管理用户名和密码
-        login-password:
+        enabled: true #开启Druid的监控统计功能页面
+        allow: # 设置IP白名单，不填则允许所有访问
+        deny: 127.0.0.1 # IP 黑名单，若白名单也存在，则优先使用
+        url-pattern: /druid/* #配置druid管理后台的访问路径 e.g.: /aa/* 则访问路径为: http://localhost:48080/aa/index.html
+        reset-enable: false # 禁用 HTML 中 Reset All 按钮
+        login-username:  root # 控制台管理用户名和密码
+        login-password:  123456
       filter:
         stat:
           enabled: true
