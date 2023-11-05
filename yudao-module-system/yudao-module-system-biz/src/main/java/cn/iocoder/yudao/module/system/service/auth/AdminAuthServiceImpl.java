@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.auth;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
+import cn.iocoder.yudao.framework.common.util.monitor.TracerUtils;
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
 import cn.iocoder.yudao.framework.common.util.validation.ValidationUtils;
 import cn.iocoder.yudao.module.system.api.logger.dto.LoginLogCreateReqDTO;
@@ -128,7 +129,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         // 插入登录日志
         LoginLogCreateReqDTO reqDTO = new LoginLogCreateReqDTO();
         reqDTO.setLogType(logTypeEnum.getType());
-        reqDTO.setTraceId("");// TODO: 13/10/2023 待后续接入
+        reqDTO.setTraceId(TracerUtils.getTraceId());
         reqDTO.setUserId(userId);
         reqDTO.setUserType(getUserType().getValue());
         reqDTO.setUsername(username);
@@ -191,7 +192,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
     private void createLogoutLog(Long userId, Integer userType, Integer logType) {
         LoginLogCreateReqDTO reqDTO = new LoginLogCreateReqDTO();
         reqDTO.setLogType(logType);
-        reqDTO.setTraceId("");// TODO: 13/10/2023
+        reqDTO.setTraceId(TracerUtils.getTraceId());
         reqDTO.setUserId(userId);
         reqDTO.setUserType(userType);
         if (ObjectUtil.equal(getUserType().getValue(), userType)) {

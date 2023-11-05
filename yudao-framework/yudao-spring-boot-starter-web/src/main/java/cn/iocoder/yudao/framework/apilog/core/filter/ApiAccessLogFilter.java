@@ -7,6 +7,7 @@ import cn.iocoder.yudao.framework.apilog.core.service.ApiAccessLog;
 import cn.iocoder.yudao.framework.apilog.core.service.ApiAccessLogFrameworkService;
 import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import cn.iocoder.yudao.framework.common.util.monitor.TracerUtils;
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
 import cn.iocoder.yudao.framework.web.config.WebProperties;
 import cn.iocoder.yudao.framework.web.core.filter.ApiRequestFilter;
@@ -92,7 +93,7 @@ public class ApiAccessLogFilter extends ApiRequestFilter {
             accessLog.setResultMsg("");
         }
         // 设置其它字段
-        accessLog.setTraceId("");// TODO: 2/11/2023  trace
+        accessLog.setTraceId(TracerUtils.getTraceId());
         accessLog.setApplicationName(applicationName);
         accessLog.setRequestUrl(request.getRequestURI());
         Map<String, Object> requestParams = MapUtil.<String, Object>builder().put("query", queryString).put("body", requestBody).build();
