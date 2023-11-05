@@ -3229,5 +3229,11 @@
 
    ![](.image/ruoyi-vue-pro-会员标签.png)
 
+#### 会员分组
+
+1. 会员分组数据库模型
+
+   ![](.image/ruoyi-vue-pro-会员分组.png)
+
 
 
