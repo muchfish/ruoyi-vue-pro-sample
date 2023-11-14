@@ -3235,5 +3235,42 @@
 
    ![](.image/ruoyi-vue-pro-会员分组.png)
 
+#### 会员管理-会员用户分页
+
+1. 会员管理-会员用户分页数据库模型
+
+   ![](.image/ruoyi-vue-pro-会员管理-会员用户分页.png)
+
+2. sql函数`FIND_IN_SET`
+
+   ```mysql
+   SELECT COUNT(*) AS total FROM member_user WHERE deleted = 0 AND (FIND_IN_SET(1, tag_ids)) AND tenant_id = 1
+   ```
+
+   `FIND_IN_SET` 是 MySQL 中的一个函数，用于在**逗号分隔的字符串**(e.g: 1,2)中查找某个值是否存在。函数的语法如下：
+
+   ```sql
+   FIND_IN_SET(search_value, string_list)
+   ```
+
+   - `search_value`: 要查找的值。
+   - `string_list`: 逗号分隔的字符串列表。
+
+   `FIND_IN_SET` 返回搜索值在字符串列表中的位置。如果找到，则返回位置索引（从 1 开始），如果未找到，则返回 0。在你的查询中，它被用于检查在 `tag_ids` 字段中是否包含值 `1`。
+
+   在你提供的 SQL 查询中，具体的使用是：
+
+   ```sql
+   FIND_IN_SET(1, tag_ids)
+   ```
+
+   这将返回 `1` 或 `0`。如果 `tag_ids` 字段中包含值 `1`，则返回 `1`，否则返回 `0`。在你的查询中，这个条件用于过滤满足以下条件的记录：
+
+   1. `deleted` 字段的值为 `0`。
+   2. `tag_ids` 字段中包含值 `1`。
+   3. `tenant_id` 字段的值为 `1`。
+
+   因此，这个查询计算了符合这些条件的记录的总数，并将其作为 `total` 返回。
+
 
 
