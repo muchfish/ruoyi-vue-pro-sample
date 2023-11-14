@@ -24,7 +24,6 @@ public interface ErrorCodeConstants {
     ErrorCode MENU_NOT_EXISTS = new ErrorCode(1_002_001_003, "菜单不存在");
     ErrorCode MENU_EXISTS_CHILDREN = new ErrorCode(1_002_001_004, "存在子菜单，无法删除");
     ErrorCode MENU_PARENT_NOT_DIR_OR_MENU = new ErrorCode(1_002_001_005, "父菜单的类型必须是目录或者菜单");
-    ErrorCode MENU_PARENT_IS_CHILD = new ErrorCode(1_002_001_006, "不能设置自己的子菜单为父菜单");
 
     // ========== 角色模块 1-002-002-000 ==========
     ErrorCode ROLE_NOT_EXISTS = new ErrorCode(1_002_002_000, "角色不存在");
@@ -105,6 +104,7 @@ public interface ErrorCodeConstants {
     ErrorCode TENANT_EXPIRE = new ErrorCode(1_002_015_002, "名字为【{}】的租户已过期");
     ErrorCode TENANT_CAN_NOT_UPDATE_SYSTEM = new ErrorCode(1_002_015_003, "系统租户不能进行修改、删除等操作！");
     ErrorCode TENANT_NAME_DUPLICATE = new ErrorCode(1_002_015_004, "名字为【{}】的租户已存在");
+    ErrorCode TENANT_WEBSITE_DUPLICATE = new ErrorCode(1_002_015_005, "域名为【{}】的租户已存在");
 
     // ========== 租户套餐 1-002-016-000 ==========
     ErrorCode TENANT_PACKAGE_NOT_EXISTS = new ErrorCode(1_002_016_000, "租户套餐不存在");
@@ -117,8 +117,11 @@ public interface ErrorCodeConstants {
 
     // ========== 社交用户 1-002-018-000 ==========
     ErrorCode SOCIAL_USER_AUTH_FAILURE = new ErrorCode(1_002_018_000, "社交授权失败，原因是：{}");
-    ErrorCode SOCIAL_USER_UNBIND_NOT_SELF = new ErrorCode(1_002_018_001, "社交解绑失败，非当前用户绑定");
-    ErrorCode SOCIAL_USER_NOT_FOUND = new ErrorCode(1_002_018_002, "社交授权失败，找不到对应的用户");
+    ErrorCode SOCIAL_USER_NOT_FOUND = new ErrorCode(1_002_018_001, "社交授权失败，找不到对应的用户");
+
+    ErrorCode SOCIAL_CLIENT_WEIXIN_MINI_APP_PHONE_CODE_ERROR = new ErrorCode(1_002_018_200, "获得手机号失败");
+    ErrorCode SOCIAL_CLIENT_NOT_EXISTS = new ErrorCode(1_002_018_201, "社交客户端不存在");
+    ErrorCode SOCIAL_CLIENT_UNIQUE = new ErrorCode(1_002_018_201, "社交客户端已存在配置");
 
     // ========== 系统敏感词 1-002-019-000 =========
     ErrorCode SENSITIVE_WORD_NOT_EXISTS = new ErrorCode(1_002_019_000, "系统敏感词在所有标签中都不存在");
@@ -163,8 +166,5 @@ public interface ErrorCodeConstants {
 
     // ========== 站内信发送 1-002-028-000 ==========
     ErrorCode NOTIFY_SEND_TEMPLATE_PARAM_MISS = new ErrorCode(1_002_028_000, "模板参数({})缺失");
-
-    // ========== 测试模块 1-002-029-000 ==========
-    ErrorCode AGE_IS_NOT_ENOUGH = new ErrorCode(1_002_029_000, "不接受未成年的娃，该娃年龄为{}岁");
 
 }

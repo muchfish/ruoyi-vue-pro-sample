@@ -3,7 +3,7 @@ package cn.iocoder.yudao.framework.common.util.date;
 import java.time.LocalDateTime;
 
 /**
- * 时间工具类，用于 {@link LocalDateTime}
+ * 时间工具类，用于 {@link java.time.LocalDateTime}
  *
  * @author 芋道源码
  */
@@ -27,5 +27,9 @@ public class LocalDateTimeUtils {
         return LocalDateTime.of(year, mouth, day, 0, 0, 0);
     }
 
+    public static LocalDateTime[] buildBetweenTime(int year1, int mouth1, int day1,
+                                                   int year2, int mouth2, int day2) {
+        return new LocalDateTime[]{buildTime(year1, mouth1, day1), buildTime(year2, mouth2, day2)};
+    }
 
 }

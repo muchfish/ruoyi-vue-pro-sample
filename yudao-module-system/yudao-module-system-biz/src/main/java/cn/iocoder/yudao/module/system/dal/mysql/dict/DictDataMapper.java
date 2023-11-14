@@ -6,9 +6,11 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataPageReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictDataDO;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 @Mapper
@@ -20,6 +22,11 @@ public interface DictDataMapper extends BaseMapperX<DictDataDO> {
 
     default DictDataDO selectByDictTypeAndLabel(String dictType, String label) {
         return selectOne(DictDataDO::getDictType, dictType, DictDataDO::getLabel, label);
+    }
+
+    default List<DictDataDO> selectByDictTypeAndValues(String dictType, Collection<String> values) {
+        return selectList(new LambdaQueryWrapper<DictDataDO>().eq(DictDataDO::getDictType, dictType)
+                .in(DictDataDO::getValue, values));
     }
 
     default long selectCountByDictType(String dictType) {
@@ -39,6 +46,12 @@ public interface DictDataMapper extends BaseMapperX<DictDataDO> {
                 .likeIfPresent(DictDataDO::getLabel, reqVO.getLabel())
                 .eqIfPresent(DictDataDO::getDictType, reqVO.getDictType())
                 .eqIfPresent(DictDataDO::getStatus, reqVO.getStatus()));
+    }
+
+    default List<DictDataDO> selectListByTypeAndStatus(String dictType, Integer status) {
+        return selectList(new LambdaQueryWrapper<DictDataDO>()
+                .eq(DictDataDO::getDictType, dictType)
+                .eq(DictDataDO::getStatus, status));
     }
 
 }

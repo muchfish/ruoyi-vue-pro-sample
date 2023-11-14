@@ -20,6 +20,7 @@ import cn.iocoder.yudao.module.system.enums.logger.LoginResultEnum;
 import cn.iocoder.yudao.module.system.enums.oauth2.OAuth2ClientConstants;
 import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
 import cn.iocoder.yudao.module.system.service.logger.LoginLogService;
+import cn.iocoder.yudao.module.system.service.member.MemberService;
 import cn.iocoder.yudao.module.system.service.oauth2.OAuth2TokenService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import com.google.common.annotations.VisibleForTesting;
@@ -53,6 +54,8 @@ public class AdminAuthServiceImpl implements AdminAuthService {
     private LoginLogService loginLogService;
     @Resource
     private OAuth2TokenService oauth2TokenService;
+    @Resource
+    private MemberService memberService;
     @Resource
     private Validator validator;
     @Resource
@@ -198,7 +201,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         if (ObjectUtil.equal(getUserType().getValue(), userType)) {
             reqDTO.setUsername(getUsername(userId));
         } else {
-            // TODO: 13/10/2023 暂时无APP端的登出
+            reqDTO.setUsername(memberService.getMemberUserMobile(userId));
         }
         reqDTO.setUserAgent(ServletUtils.getUserAgent());
         reqDTO.setUserIp(ServletUtils.getClientIP());

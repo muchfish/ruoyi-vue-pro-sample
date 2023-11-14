@@ -256,6 +256,48 @@
                 <artifactId>spring-boot-admin-starter-client</artifactId> <!-- 实现 Spring Boot Admin Server 服务端 -->
                 <version>${spring-boot-admin.version}</version>
             </dependency>
+            <!-- Test 测试相关 -->
+            <dependency>
+                <groupId>cn.iocoder.boot</groupId>
+                <artifactId>yudao-spring-boot-starter-test</artifactId>
+                <version>${revision}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-inline</artifactId>
+                <version>${mockito-inline.version}</version> <!-- 支持 Mockito 的 final 类与 static 方法的 mock -->
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring.boot.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>asm</artifactId>
+                        <groupId>org.ow2.asm</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.mockito</groupId>
+                        <artifactId>mockito-core</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.fppt</groupId> <!-- 单元测试，我们采用内嵌的 Redis 数据库 -->
+                <artifactId>jedis-mock</artifactId>
+                <version>${jedis-mock.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>uk.co.jemos.podam</groupId> <!-- 单元测试，随机生成 POJO 类 -->
+                <artifactId>podam</artifactId>
+                <version>${podam.version}</version>
+            </dependency>
+
             <!-- 工具类相关 -->
             <dependency>
                 <groupId>cn.iocoder.boot</groupId>

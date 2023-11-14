@@ -67,6 +67,13 @@ public class DictDataServiceImpl implements DictDataService {
     }
 
     @Override
+    public List<DictDataDO> getEnabledDictDataListByType(String dictType) {
+        List<DictDataDO> list = dictDataMapper.selectListByTypeAndStatus(dictType, CommonStatusEnum.ENABLE.getStatus());
+        list.sort(COMPARATOR_TYPE_AND_SORT);
+        return list;
+    }
+
+    @Override
     public DictDataDO getDictData(Long id) {
         return dictDataMapper.selectById(id);
     }
@@ -152,7 +159,24 @@ public class DictDataServiceImpl implements DictDataService {
         }
     }
 
-
+    @Override
+    public void validateDictDataList(String dictType, Collection<String> values) {
+        if (CollUtil.isEmpty(values)) {
+            return;
+        }
+        Map<String, DictDataDO> dictDataMap = CollectionUtils.convertMap(
+                dictDataMapper.selectByDictTypeAndValues(dictType, values), DictDataDO::getValue);
+        // 校验
+        values.forEach(value -> {
+            DictDataDO dictData = dictDataMap.get(value);
+            if (dictData == null) {
+                throw exception(DICT_DATA_NOT_EXISTS);
+            }
+            if (!CommonStatusEnum.ENABLE.getStatus().equals(dictData.getStatus())) {
+                throw exception(DICT_DATA_NOT_ENABLE, dictData.getLabel());
+            }
+        });
+    }
 
     @Override
     public DictDataDO getDictData(String dictType, String value) {

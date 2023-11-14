@@ -11,6 +11,7 @@ import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailTemplateDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.mq.message.mail.MailSendMessage;
 import cn.iocoder.yudao.module.system.mq.producer.mail.MailProducer;
+import cn.iocoder.yudao.module.system.service.member.MemberService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,8 @@ public class MailSendServiceImpl implements MailSendService {
 
     @Resource
     private AdminUserService adminUserService;
+    @Resource
+    private MemberService memberService;
 
     @Resource
     private MailAccountService mailAccountService;
@@ -59,6 +62,17 @@ public class MailSendServiceImpl implements MailSendService {
         }
         // 执行发送
         return sendSingleMail(mail, userId, UserTypeEnum.ADMIN.getValue(), templateCode, templateParams);
+    }
+
+    @Override
+    public Long sendSingleMailToMember(String mail, Long userId,
+                                       String templateCode, Map<String, Object> templateParams) {
+        // 如果 mail 为空，则加载用户编号对应的邮箱
+        if (StrUtil.isEmpty(mail)) {
+            mail = memberService.getMemberUserEmail(userId);
+        }
+        // 执行发送
+        return sendSingleMail(mail, userId, UserTypeEnum.MEMBER.getValue(), templateCode, templateParams);
     }
 
     @Override
