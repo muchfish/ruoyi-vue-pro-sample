@@ -49,5 +49,7 @@ public interface MemberUserMapper extends BaseMapperX<MemberUserDO> {
                 .orderByDesc(MemberUserDO::getId));
     }
 
-
+    default Long selectCountByLevelId(Long levelId) {
+        return selectCount(MemberUserDO::getLevelId, levelId);
+    }
 }

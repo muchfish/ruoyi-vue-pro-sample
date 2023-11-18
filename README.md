@@ -3286,5 +3286,41 @@
      - 22-订单积分奖励（整单取消）
      - 23-订单积分奖励（单个退款）
    - point: 1、正数表示获得积分 2、负数表示消耗积分
+   
+   
 
 
+#### 会员等级-分页
+1. 会员等级-数据库模型
+
+   ![](.image/ruoyi-vue-pro-会员等级-分页.png)
+
+   - 用户是和等级id关联会导致的问题
+     - 如果后台更新用户等级该级别所需经验值之后,可能会导致用户实际经验和等级不匹配.
+     - 后台可以修改等级表的级别,用户的级别发生变更后,导致用户实际经验和等级不匹配.
+     - 后台关闭某等级后,会导致对应等级用户有经验值无等级
+
+2. 会员等级crud
+   - 等级之间不连贯,可以跳级.
+   - 高低等级间的折扣率大小没做校验
+
+3. 积分扣减的代码(不在本次提交)
+
+   ```java
+       /**
+        * 更新用户积分（减少）
+        *
+        * @param id        用户编号
+        * @param incrCount 增加积分（负数）
+        * @return 更新行数
+        */
+       default int updatePointDecr(Long id, Integer incrCount) {
+           Assert.isTrue(incrCount < 0);
+           LambdaUpdateWrapper<MemberUserDO> lambdaUpdateWrapper = new LambdaUpdateWrapper<MemberUserDO>()
+                   .setSql(" point = point + " + incrCount) // 负数，所以使用 + 号
+                   .eq(MemberUserDO::getId, id);
+           return update(null, lambdaUpdateWrapper);
+       }
+   ```
+
+   - 可能会导致积分扣减为负数,扣减积分时未在sql语句中判断积分是否充足

@@ -103,5 +103,8 @@ public class MemberUserServiceImpl implements MemberUserService {
         return memberUserMapper.selectPage(pageReqVO);
     }
 
-
+    @Override
+    public Long getUserCountByLevelId(Long levelId) {
+        return memberUserMapper.selectCountByLevelId(levelId);
+    }
 }

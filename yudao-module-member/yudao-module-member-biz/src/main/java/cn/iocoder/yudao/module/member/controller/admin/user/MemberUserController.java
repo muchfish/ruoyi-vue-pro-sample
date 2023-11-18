@@ -8,9 +8,11 @@ import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.iocoder.yudao.module.member.convert.user.MemberUserConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.service.group.MemberGroupService;
+import cn.iocoder.yudao.module.member.service.level.MemberLevelService;
 import cn.iocoder.yudao.module.member.service.tag.MemberTagService;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,6 +43,8 @@ public class MemberUserController {
     private MemberUserService memberUserService;
     @Resource
     private MemberTagService memberTagService;
+    @Resource
+    private MemberLevelService memberLevelService;
     @Resource
     private MemberGroupService memberGroupService;
 
@@ -78,10 +82,13 @@ public class MemberUserController {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toSet());
         List<MemberTagDO> tags = memberTagService.getTagList(tagIds);
+        // 处理用户级别返显
+        List<MemberLevelDO> levels = memberLevelService.getLevelList(
+                convertSet(pageResult.getList(), MemberUserDO::getLevelId));
         // 处理用户分组返显
         List<MemberGroupDO> groups = memberGroupService.getGroupList(
                 convertSet(pageResult.getList(), MemberUserDO::getGroupId));
-        return success(MemberUserConvert.INSTANCE.convertPage(pageResult, tags, groups));
+        return success(MemberUserConvert.INSTANCE.convertPage(pageResult, tags, levels, groups));
     }
 
 }
