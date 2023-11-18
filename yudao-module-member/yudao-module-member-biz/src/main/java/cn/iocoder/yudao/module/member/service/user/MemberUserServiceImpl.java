@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.member.service.user;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserPageReqVO;
@@ -14,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+
+import java.util.Collection;
+import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_MOBILE_USED;
@@ -33,8 +38,21 @@ public class MemberUserServiceImpl implements MemberUserService {
     private MemberUserMapper memberUserMapper;
 
     @Override
+    public List<MemberUserDO> getUserListByNickname(String nickname) {
+        return memberUserMapper.selectListByNicknameLike(nickname);
+    }
+
+    @Override
     public MemberUserDO getUser(Long id) {
         return memberUserMapper.selectById(id);
+    }
+
+    @Override
+    public List<MemberUserDO> getUserList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return ListUtil.empty();
+        }
+        return memberUserMapper.selectBatchIds(ids);
     }
 
     @Override

@@ -6,6 +6,8 @@ import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateR
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 
 import javax.validation.Valid;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 会员用户 Service 接口
@@ -14,6 +16,13 @@ import javax.validation.Valid;
  */
 public interface MemberUserService {
 
+    /**
+     * 基于用户昵称，模糊匹配用户列表
+     *
+     * @param nickname 用户昵称，模糊匹配
+     * @return 用户信息的列表
+     */
+    List<MemberUserDO> getUserListByNickname(String nickname);
 
     /**
      * 通过用户 ID 查询用户
@@ -23,6 +32,13 @@ public interface MemberUserService {
      */
     MemberUserDO getUser(Long id);
 
+    /**
+     * 通过用户 ID 查询用户们
+     *
+     * @param ids 用户 ID
+     * @return 用户对象信息数组
+     */
+    List<MemberUserDO> getUserList(Collection<Long> ids);
 
     /**
      * 【管理员】更新会员用户

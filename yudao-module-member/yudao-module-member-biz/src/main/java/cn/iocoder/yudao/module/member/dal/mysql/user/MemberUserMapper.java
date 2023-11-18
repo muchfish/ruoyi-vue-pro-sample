@@ -1,14 +1,12 @@
 package cn.iocoder.yudao.module.member.dal.mysql.user;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -24,6 +22,11 @@ public interface MemberUserMapper extends BaseMapperX<MemberUserDO> {
 
     default MemberUserDO selectByMobile(String mobile) {
         return selectOne(MemberUserDO::getMobile, mobile);
+    }
+
+    default List<MemberUserDO> selectListByNicknameLike(String nickname) {
+        return selectList(new LambdaQueryWrapperX<MemberUserDO>()
+                .likeIfPresent(MemberUserDO::getNickname, nickname));
     }
 
     default PageResult<MemberUserDO> selectPage(MemberUserPageReqVO reqVO) {
