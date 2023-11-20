@@ -3383,3 +3383,41 @@
    1. 校验用户积分余额
    2. 更新用户积分
    3. 增加积分记录
+
+
+
+#### 会员管理-账户明细(成长值记录列表|收货地址列表)
+
+1. 收货地址数据库模型
+
+   ![](.image/ruoyi-vue-pro-用户收件地址.png)
+
+2. mapstruct自定义字段映射
+
+   ```java
+   @Mapper
+   public interface AddressConvert {
+   
+       AddressConvert INSTANCE = Mappers.getMapper(AddressConvert.class);
+   
+       @Named("convertAreaIdToAreaName")
+       default String convertAreaIdToAreaName(Integer areaId) {
+           return AreaUtils.format(areaId);
+       }
+   
+   }
+   ```
+
+   在`MemberUserConvert`中使用`AddressConvert`的`convertAreaIdToAreaName`方法进行VO转换
+
+   ```java
+   @Mapper(uses = {AddressConvert.class})
+   public interface MemberUserConvert {
+   
+       @Mapping(source = "areaId", target = "areaName", qualifiedByName = "convertAreaIdToAreaName")
+       MemberUserRespVO convert03(MemberUserDO bean);
+   
+   }
+   ```
+
+   
