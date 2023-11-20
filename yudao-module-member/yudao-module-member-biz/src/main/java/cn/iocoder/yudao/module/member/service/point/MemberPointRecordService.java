@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.member.service.point;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.admin.point.vo.recrod.MemberPointRecordPageReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.point.MemberPointRecordDO;
+import cn.iocoder.yudao.module.member.enums.point.MemberPointBizTypeEnum;
 
 /**
  * 用户积分记录 Service 接口
@@ -19,4 +20,13 @@ public interface MemberPointRecordService {
      */
     PageResult<MemberPointRecordDO> getPointRecordPage(MemberPointRecordPageReqVO pageReqVO);
 
+    /**
+     * 创建用户积分记录
+     *
+     * @param userId  用户ID
+     * @param point   变动积分
+     * @param bizType 业务类型
+     * @param bizId   业务编号
+     */
+    void createPointRecord(Long userId, Integer point, MemberPointBizTypeEnum bizType, String bizId);
 }

@@ -54,6 +54,14 @@ public interface MemberUserService {
      * @return 会员用户分页
      */
     PageResult<MemberUserDO> getUserPage(MemberUserPageReqVO pageReqVO);
+    /**
+     * 更新用户的等级和经验
+     *
+     * @param id         用户编号
+     * @param levelId    用户等级
+     * @param experience 用户经验
+     */
+    void updateUserLevel(Long id, Long levelId, Integer experience);
 
     /**
      * 获得指定用户等级下的用户数量
@@ -63,4 +71,12 @@ public interface MemberUserService {
      */
     Long getUserCountByLevelId(Long levelId);
 
+    /**
+     * 更新用户的积分
+     *
+     * @param userId 用户编号
+     * @param point  积分数量
+     * @return 更新结果
+     */
+    boolean updateUserPoint(Long userId, Integer point);
 }

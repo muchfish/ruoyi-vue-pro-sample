@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.member.service.user;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserPageReqVO;
@@ -104,7 +105,28 @@ public class MemberUserServiceImpl implements MemberUserService {
     }
 
     @Override
+    public void updateUserLevel(Long id, Long levelId, Integer experience) {
+        // 0 代表无等级：防止UpdateById时，会被过滤掉的问题
+        levelId = ObjectUtil.defaultIfNull(levelId, 0L);
+        memberUserMapper.updateById(new MemberUserDO()
+                .setId(id)
+                .setLevelId(levelId).setExperience(experience)
+        );
+    }
+
+    @Override
     public Long getUserCountByLevelId(Long levelId) {
         return memberUserMapper.selectCountByLevelId(levelId);
     }
+
+    @Override
+    public boolean updateUserPoint(Long id, Integer point) {
+        if (point > 0) {
+            memberUserMapper.updatePointIncr(id, point);
+        } else if (point < 0) {
+            return memberUserMapper.updatePointDecr(id, point) > 0;
+        }
+        return true;
+    }
+
 }

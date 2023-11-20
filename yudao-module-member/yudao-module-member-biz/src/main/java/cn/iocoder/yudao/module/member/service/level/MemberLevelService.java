@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLevelCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLevelListReqVO;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLevelUpdateReqVO;
+import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateLevelReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 
 import javax.validation.Valid;
@@ -79,6 +80,13 @@ public interface MemberLevelService {
     default List<MemberLevelDO> getEnableLevelList() {
         return getLevelListByStatus(CommonStatusEnum.ENABLE.getStatus());
     }
+
+    /**
+     * 修改会员的等级
+     *
+     * @param updateReqVO 修改参数
+     */
+    void updateUserLevel(MemberUserUpdateLevelReqVO updateReqVO);
 
 
 }

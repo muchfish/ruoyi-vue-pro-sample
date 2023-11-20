@@ -1,22 +1,31 @@
 package cn.iocoder.yudao.module.member.service.level;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLevelCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLevelListReqVO;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLevelUpdateReqVO;
+import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateLevelReqVO;
 import cn.iocoder.yudao.module.member.convert.level.MemberLevelConvert;
+import cn.iocoder.yudao.module.member.convert.level.MemberLevelRecordConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelRecordDO;
+import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.dal.mysql.level.MemberLevelMapper;
+import cn.iocoder.yudao.module.member.enums.MemberExperienceBizTypeEnum;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
@@ -35,6 +44,10 @@ public class MemberLevelServiceImpl implements MemberLevelService {
     @Resource
     private MemberLevelMapper memberLevelMapper;
 
+    @Resource
+    private MemberLevelRecordService memberLevelRecordService;
+    @Resource
+    private MemberExperienceRecordService memberExperienceRecordService;
     @Resource
     private MemberUserService memberUserService;
 
@@ -169,5 +182,54 @@ public class MemberLevelServiceImpl implements MemberLevelService {
         return memberLevelMapper.selectListByStatus(status);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateUserLevel(MemberUserUpdateLevelReqVO updateReqVO) {
+        MemberUserDO user = memberUserService.getUser(updateReqVO.getId());
+        if (user == null) {
+            throw exception(USER_NOT_EXISTS);
+        }
+        // 等级未发生变化
+        if (ObjUtil.equal(user.getLevelId(), updateReqVO.getLevelId())) {
+            return;
+        }
+
+        // 1. 记录等级变动
+        MemberLevelRecordDO levelRecord = new MemberLevelRecordDO()
+                .setUserId(user.getId()).setRemark(updateReqVO.getReason());
+        MemberLevelDO memberLevel = null;
+        if (updateReqVO.getLevelId() == null) {
+            // 取消用户等级时，需要扣减经验
+            levelRecord.setExperience(-user.getExperience());
+            levelRecord.setUserExperience(0);
+            levelRecord.setDescription("管理员取消了等级");
+        } else {
+            // 复制等级配置
+            memberLevel = validateLevelExists(updateReqVO.getLevelId());
+            MemberLevelRecordConvert.INSTANCE.copyTo(memberLevel, levelRecord);
+            // 变动经验值 = 等级的升级经验 - 会员当前的经验；正数为增加经验，负数为扣减经验
+            levelRecord.setExperience(memberLevel.getExperience() - user.getExperience());
+            levelRecord.setUserExperience(memberLevel.getExperience()); // 会员当前的经验 = 等级的升级经验
+            levelRecord.setDescription("管理员调整为：" + memberLevel.getName());
+        }
+        memberLevelRecordService.createLevelRecord(levelRecord);
+
+        // 2. 记录会员经验变动
+        memberExperienceRecordService.createExperienceRecord(user.getId(),
+                levelRecord.getExperience(), levelRecord.getUserExperience(),
+                MemberExperienceBizTypeEnum.ADMIN, String.valueOf(MemberExperienceBizTypeEnum.ADMIN.getType()));
+
+        // 3. 更新会员表上的等级编号、经验值
+        memberUserService.updateUserLevel(user.getId(), updateReqVO.getLevelId(),
+                levelRecord.getUserExperience());
+
+        // 4. 给会员发送等级变动消息
+        notifyMemberLevelChange(user.getId(), memberLevel);
+    }
+
+
+    private void notifyMemberLevelChange(Long userId, MemberLevelDO level) {
+        //todo: 给会员发消息
+    }
 
 }
