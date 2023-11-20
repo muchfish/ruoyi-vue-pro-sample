@@ -84,8 +84,6 @@ public class MemberUserController {
         return success(true);
     }
 
-
-
     @GetMapping("/get")
     @Operation(summary = "获得会员用户")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
