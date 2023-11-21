@@ -55,6 +55,11 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     }
 
     @Override
+    public ProductSkuDO getSku(Long id) {
+        return productSkuMapper.selectById(id);
+    }
+
+    @Override
     public void validateSkuList(List<ProductSkuCreateOrUpdateReqVO> skus, Boolean specType) {
         // 0、校验skus是否为空
         if (CollUtil.isEmpty(skus)) {

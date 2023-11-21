@@ -14,6 +14,14 @@ import java.util.List;
 public interface ProductSkuService {
 
     /**
+     * 获得商品 SKU 信息
+     *
+     * @param id 编号
+     * @return 商品 SKU 信息
+     */
+    ProductSkuDO getSku(Long id);
+
+    /**
      * 对 sku 的组合的属性等进行合法性校验
      *
      * @param list sku组合的集合
