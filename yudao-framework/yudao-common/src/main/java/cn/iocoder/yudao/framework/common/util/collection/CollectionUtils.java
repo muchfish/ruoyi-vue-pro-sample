@@ -3,12 +3,13 @@ package cn.iocoder.yudao.framework.common.util.collection;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ArrayUtil;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -106,6 +107,13 @@ public class CollectionUtils {
         return from.stream().collect(Collectors.toMap(keyFunc, valueFunc, mergeFunction, supplier));
     }
 
+    public static <T, K> Map<K, List<T>> convertMultiMap(Collection<T> from, Function<T, K> keyFunc) {
+        if (CollUtil.isEmpty(from)) {
+            return new HashMap<>();
+        }
+        return from.stream().collect(Collectors.groupingBy(keyFunc, Collectors.mapping(t -> t, Collectors.toList())));
+    }
+
     public static boolean containsAny(Collection<?> source, Collection<?> candidates) {
         return org.springframework.util.CollectionUtils.containsAny(source, candidates);
     }
@@ -115,10 +123,14 @@ public class CollectionUtils {
     }
 
     public static <T> T findFirst(List<T> from, Predicate<T> predicate) {
+        return findFirst(from, predicate, Function.identity());
+    }
+
+    public static <T, U> U findFirst(List<T> from, Predicate<T> predicate, Function<T, U> func) {
         if (CollUtil.isEmpty(from)) {
             return null;
         }
-        return from.stream().filter(predicate).findFirst().orElse(null);
+        return from.stream().filter(predicate).findFirst().map(func).orElse(null);
     }
 
     public static <T, V extends Comparable<? super V>> V getMaxValue(Collection<T> from, Function<T, V> valueFunc) {
