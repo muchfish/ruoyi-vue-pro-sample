@@ -3490,3 +3490,57 @@
 
    1. 创建虚拟评论
    2. 商家回复评论(可反复修改)
+   3. 可显示或隐藏评论
+
+3. mapstruct对象映射（对象转换）的示例
+
+   这段代码是使用 MapStruct 库进行对象映射（对象转换）的示例。MapStruct 是一个在 Java 中用于简化对象映射的注解处理器，它能够根据你定义的映射关系自动生成映射代码。
+
+   让我们逐一解释这个例子：
+
+   1. **自定义转换方法 `convertScores`：**
+      ```java
+      @Named("convertScores")
+      default Integer convertScores(Integer descriptionScores, Integer benefitScores) {
+          // 计算评价最终综合评分 最终星数 = （商品评星 + 服务评星） / 2
+          BigDecimal sumScore = new BigDecimal(descriptionScores + benefitScores);
+          BigDecimal divide = sumScore.divide(BigDecimal.valueOf(2L), 0, RoundingMode.DOWN);
+          return divide.intValue();
+      }
+      ```
+      - 这是一个默认方法，用于计算评分的综合值，将商品评星和服务评星的平均值转换为整数。
+      - 通过 `@Named("convertScores")` 注解，该方法可以在后面的映射中以命名的方式调用。
+
+   2. **MapStruct 的映射配置：**
+      ```java
+      @Mapping(target = "visible", constant = "true")
+      @Mapping(target = "replyStatus", constant = "false")
+      @Mapping(target = "userId", constant = "0L")
+      @Mapping(target = "orderId", constant = "0L")
+      @Mapping(target = "orderItemId", constant = "0L")
+      @Mapping(target = "anonymous", expression = "java(Boolean.FALSE)")
+      @Mapping(target = "scores",
+              expression = "java(convertScores(createReq.getDescriptionScores(), createReq.getBenefitScores()))")
+      ProductCommentDO convert(ProductCommentCreateReqVO createReq);
+      ```
+      - 这是一个用于将 `ProductCommentCreateReqVO` 转换为 `ProductCommentDO` 的映射方法。
+      - 使用 `@Mapping` 注解来定义映射关系。例如，`@Mapping(target = "visible", constant = "true")` 表示将 `visible` 属性映射为常量值 "true"。
+      - `expression` 属性用于执行复杂的表达式，例如调用 `convertScores` 方法来计算评分。
+      - `@Named("convertScores")` 用于指定使用 `convertScores` 方法进行评分的转换。
+
+   3. **调用映射方法：**
+      ```java
+      ProductCommentDO convert(ProductCommentCreateReqVO createReq);
+      ```
+      - 这是一个接口的抽象方法，MapStruct 会自动生成其实现。该方法的作用是将 `ProductCommentCreateReqVO` 类型的对象转换为 `ProductCommentDO` 类型的对象，根据上述配置实现了属性的映射。
+
+   总体来说，MapStruct 通过简单的注解配置，自动生成了对象之间的映射代码，避免了手动编写繁琐的映射逻辑。这样可以提高代码的可维护性和可读性。
+
+#### 会员详情-收藏记录
+1. 收藏记录数据库模型
+   
+   ![](.image/ruoyi-vue-pro-收藏记录.png)
+   - 商品收藏是spu维度
+
+
+
