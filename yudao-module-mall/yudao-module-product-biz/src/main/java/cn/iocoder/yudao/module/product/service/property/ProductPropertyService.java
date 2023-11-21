@@ -65,5 +65,12 @@ public interface ProductPropertyService {
      */
     ProductPropertyDO getProperty(Long id);
 
+    /**
+     * 根据属性项的编号的集合，获得对应的属性项数组
+     *
+     * @param ids 属性项的编号的集合
+     * @return 属性项数组
+     */
+    List<ProductPropertyDO> getPropertyList(Collection<Long> ids);
 
 }

@@ -56,6 +56,13 @@ public interface ProductBrandService {
     List<ProductBrandDO> getBrandList(ProductBrandListReqVO listReqVO);
 
     /**
+     * 验证选择的商品分类是否合法
+     *
+     * @param id 分类编号
+     */
+    void validateProductBrand(Long id);
+
+    /**
      * 获得品牌分页
      *
      * @param pageReqVO 分页查询

@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.product.service.brand;
 
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.product.controller.admin.brand.vo.ProductBrandCreateReqVO;
 import cn.iocoder.yudao.module.product.controller.admin.brand.vo.ProductBrandListReqVO;
@@ -16,8 +17,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.BRAND_NAME_EXISTS;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.BRAND_NOT_EXISTS;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 
 /**
  * 品牌 Service 实现类
@@ -90,6 +90,17 @@ public class ProductBrandServiceImpl implements ProductBrandService {
     @Override
     public List<ProductBrandDO> getBrandList(ProductBrandListReqVO listReqVO) {
         return brandMapper.selectList(listReqVO);
+    }
+
+    @Override
+    public void validateProductBrand(Long id) {
+        ProductBrandDO brand = brandMapper.selectById(id);
+        if (brand == null) {
+            throw exception(BRAND_NOT_EXISTS);
+        }
+        if (brand.getStatus().equals(CommonStatusEnum.DISABLE.getStatus())) {
+            throw exception(BRAND_DISABLED);
+        }
     }
 
     @Override

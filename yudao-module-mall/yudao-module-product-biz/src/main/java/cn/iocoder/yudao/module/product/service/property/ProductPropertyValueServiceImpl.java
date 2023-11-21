@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.product.controller.admin.property.vo.value.Produc
 import cn.iocoder.yudao.module.product.convert.property.ProductPropertyValueConvert;
 import cn.iocoder.yudao.module.product.dal.dataobject.property.ProductPropertyValueDO;
 import cn.iocoder.yudao.module.product.dal.mysql.property.ProductPropertyValueMapper;
+import cn.iocoder.yudao.module.product.service.sku.ProductSkuService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +35,10 @@ public class ProductPropertyValueServiceImpl implements ProductPropertyValueServ
     @Resource
     @Lazy // 延迟加载，避免循环依赖
     private ProductPropertyService productPropertyService;
+
+    @Resource
+    @Lazy // 延迟加载，避免循环依赖
+    private ProductSkuService productSkuService;
 
     @Override
     public Long createPropertyValue(ProductPropertyValueCreateReqVO createReqVO) {
@@ -63,7 +68,8 @@ public class ProductPropertyValueServiceImpl implements ProductPropertyValueServ
         // 更新
         ProductPropertyValueDO updateObj = ProductPropertyValueConvert.INSTANCE.convert(updateReqVO);
         productPropertyValueMapper.updateById(updateObj);
-        // 更新 sku 相关属性 // TODO: 21/11/2023
+        // 更新 sku 相关属性
+        productSkuService.updateSkuPropertyValue(updateObj.getId(), updateObj.getName());
     }
 
     @Override
