@@ -20,6 +20,8 @@
     <modules>
         <module>yudao-module-product-api</module>
         <module>yudao-module-product-biz</module>
+        <module>yudao-module-trade-api</module>
+        <module>yudao-module-trade-biz</module>
     </modules>
 
 </project>
