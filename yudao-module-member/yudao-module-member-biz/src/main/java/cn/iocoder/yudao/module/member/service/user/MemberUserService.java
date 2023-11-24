@@ -17,6 +17,14 @@ import java.util.List;
 public interface MemberUserService {
 
     /**
+     * 通过手机查询用户
+     *
+     * @param mobile 手机
+     * @return 用户对象
+     */
+    MemberUserDO getUserByMobile(String mobile);
+
+    /**
      * 基于用户昵称，模糊匹配用户列表
      *
      * @param nickname 用户昵称，模糊匹配

@@ -39,6 +39,11 @@ public class MemberUserServiceImpl implements MemberUserService {
     private MemberUserMapper memberUserMapper;
 
     @Override
+    public MemberUserDO getUserByMobile(String mobile) {
+        return memberUserMapper.selectByMobile(mobile);
+    }
+
+    @Override
     public List<MemberUserDO> getUserListByNickname(String nickname) {
         return memberUserMapper.selectListByNicknameLike(nickname);
     }
