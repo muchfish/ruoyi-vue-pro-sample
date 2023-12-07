@@ -3632,3 +3632,9 @@
 
    ![](.image/ruoyi-vue-pro-售后退款.png)
 
+
+#### 售后退款-详情|同意售后|拒绝售后
+1. 售后退款数据库模型
+
+   ![](.image/ruoyi-vue-pro-售后退款.png)
+

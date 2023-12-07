@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.member.api.user.MemberUserApi;
 import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
 import cn.iocoder.yudao.module.trade.controller.admin.order.vo.TradeOrderPageItemRespVO;
 import cn.iocoder.yudao.module.trade.controller.admin.order.vo.TradeOrderPageReqVO;
+import cn.iocoder.yudao.module.trade.controller.admin.order.vo.TradeOrderSummaryRespVO;
 import cn.iocoder.yudao.module.trade.convert.order.TradeOrderConvert;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderItemDO;
@@ -64,5 +65,11 @@ public class TradeOrderController {
         return success(TradeOrderConvert.INSTANCE.convertPage(pageResult, orderItems, userMap));
     }
 
+    @GetMapping("/summary")
+    @Operation(summary = "获得交易订单统计")
+    @PreAuthorize("@ss.hasPermission('trade:order:query')")
+    public CommonResult<TradeOrderSummaryRespVO> getOrderSummary(TradeOrderPageReqVO reqVO) {
+        return success(tradeOrderQueryService.getOrderSummary(reqVO));
+    }
 
 }

@@ -192,6 +192,11 @@
                 <version>${dynamic-datasource.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.github.yulichang</groupId>
+                <artifactId>mybatis-plus-join-boot-starter</artifactId> <!-- MyBatis 联表查询 -->
+                <version>${mybatis-plus-join.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>cn.iocoder.boot</groupId>
                 <artifactId>yudao-spring-boot-starter-redis</artifactId>
                 <version>${revision}</version>

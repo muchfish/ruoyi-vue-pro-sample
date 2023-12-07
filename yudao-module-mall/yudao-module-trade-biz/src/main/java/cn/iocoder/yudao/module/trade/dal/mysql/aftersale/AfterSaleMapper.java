@@ -26,5 +26,8 @@ public interface AfterSaleMapper extends BaseMapperX<AfterSaleDO> {
                 .orderByDesc(AfterSaleDO::getId));
     }
 
-
+    default int updateByIdAndStatus(Long id, Integer status, AfterSaleDO update) {
+        return update(update, new LambdaUpdateWrapper<AfterSaleDO>()
+                .eq(AfterSaleDO::getId, id).eq(AfterSaleDO::getStatus, status));
+    }
 }

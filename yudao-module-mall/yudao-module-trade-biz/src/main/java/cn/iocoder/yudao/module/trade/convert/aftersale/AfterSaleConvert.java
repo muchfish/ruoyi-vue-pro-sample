@@ -2,12 +2,19 @@ package cn.iocoder.yudao.module.trade.convert.aftersale;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
+import cn.iocoder.yudao.module.trade.controller.admin.aftersale.vo.AfterSaleDetailRespVO;
 import cn.iocoder.yudao.module.trade.controller.admin.aftersale.vo.AfterSaleRespPageItemVO;
+import cn.iocoder.yudao.module.trade.controller.admin.aftersale.vo.log.AfterSaleLogRespVO;
 import cn.iocoder.yudao.module.trade.controller.admin.base.member.user.MemberUserRespVO;
+import cn.iocoder.yudao.module.trade.controller.admin.order.vo.TradeOrderBaseVO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.aftersale.AfterSaleDO;
+import cn.iocoder.yudao.module.trade.dal.dataobject.aftersale.AfterSaleLogDO;
+import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
+import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderItemDO;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
+import java.util.List;
 import java.util.Map;
 
 @Mapper
@@ -28,5 +35,22 @@ public interface AfterSaleConvert {
         return voPageResult;
     }
 
+    default AfterSaleDetailRespVO convert(AfterSaleDO afterSale, TradeOrderDO order, TradeOrderItemDO orderItem,
+                                          MemberUserRespDTO user, List<AfterSaleLogDO> logs) {
+        AfterSaleDetailRespVO respVO = convert02(afterSale);
+        // 处理用户信息
+        respVO.setUser(convert(user));
+        // 处理订单信息
+        respVO.setOrder(convert(order));
+        respVO.setOrderItem(convert02(orderItem));
+        // 处理售后日志
+        respVO.setLogs(convertList1(logs));
+        return respVO;
+    }
+
+    List<AfterSaleLogRespVO> convertList1(List<AfterSaleLogDO> list);
+    AfterSaleDetailRespVO convert02(AfterSaleDO bean);
+    AfterSaleDetailRespVO.OrderItem convert02(TradeOrderItemDO bean);
+    TradeOrderBaseVO convert(TradeOrderDO bean);
 
 }
